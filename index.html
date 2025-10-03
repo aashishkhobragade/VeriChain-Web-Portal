@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -129,29 +130,6 @@
             <p class="text-slate-400 mt-2 text-lg">A decentralized solution for product provenance and authenticity.</p>
         </header>
 
-        <!-- Demo Product IDs -->
-        <div class="mb-8">
-             <details class="card p-1">
-                <summary class="cursor-pointer font-semibold text-white p-4 flex justify-between items-center">
-                    <span>Available Product IDs for Demo</span>
-                    <svg class="w-5 h-5 transition-transform transform details-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                </summary>
-                <div class="p-4 border-t border-slate-700">
-                    <table class="w-full text-left text-sm">
-                        <thead>
-                            <tr class="border-b border-slate-600">
-                                <th class="py-2 pr-2 font-semibold text-slate-300">Product Name</th>
-                                <th class="py-2 pl-2 font-mono text-slate-300">Product ID</th>
-                            </tr>
-                        </thead>
-                        <tbody id="demo-ids-table">
-                            <!-- Populated by script -->
-                        </tbody>
-                    </table>
-                </div>
-            </details>
-        </div>
-
         <!-- Role Tabs -->
         <div class="mb-8 border-b border-slate-700">
             <nav class="flex flex-wrap -mb-px justify-center" aria-label="Tabs">
@@ -176,14 +154,15 @@
             <div id="manufacturer" class="tab-content fade-in">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div class="card p-6">
-                        <h2 class="text-2xl font-semibold mb-4 text-white">Register New Product</h2>
+                        <h2 class="text-2xl font-semibold mb-4 text-white">Register New Product Event</h2>
                         <form id="registerProductForm" class="space-y-4">
-                            <input type="text" id="productName" placeholder="Product Name (e.g., Organic Coffee Beans)" class="form-input" required>
-                            <input type="text" id="productOrigin" placeholder="Origin (e.g., Colombia)" class="form-input" required>
-                            <input type="text" id="productCert" placeholder="Certifications (e.g., Fair Trade, USDA Organic)" class="form-input" required>
-                            <input type="text" id="batchId" placeholder="Batch ID" class="form-input" required>
+                            <input type="text" id="item_id" placeholder="Product ID (e.g., PROD-A100)" class="form-input" required>
+                            <input type="text" id="supplier" placeholder="Supplier Name (e.g., EpsilonCo)" class="form-input" required>
+                            <input type="text" id="serial_no" placeholder="Serial Number (e.g., SN-A100-1234)" class="form-input" required>
+                            <input type="text" id="customer" placeholder="Customer (e.g., DistributorX)" class="form-input" required>
+                             <input type="number" id="quantity" placeholder="Quantity" class="form-input" required>
                             <button type="submit" class="submit-button w-full text-white py-3 rounded-lg font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 focus:ring-offset-slate-900 flex items-center justify-center">
-                                <span class="button-text">Register & Mint Token</span>
+                                <span class="button-text">Register Event</span>
                                 <div class="spinner hidden ml-2"></div>
                             </button>
                         </form>
@@ -191,7 +170,10 @@
                     <div class="card p-6">
                         <h2 class="text-2xl font-semibold mb-4 text-white">Registered Products</h2>
                         <div id="registeredProductsList" class="space-y-3 max-h-96 overflow-y-auto pr-2">
-                           <!-- Product items will be injected here -->
+                           <div class="text-center py-10 px-4">
+                                <div class="spinner mx-auto" style="width: 32px; height: 32px; border-width: 3px;"></div>
+                                <p class="mt-4 text-slate-400">Loading products from database...</p>
+                           </div>
                         </div>
                     </div>
                 </div>
@@ -201,18 +183,18 @@
             <div id="logistics" class="tab-content hidden">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div class="card p-6">
-                        <h2 class="text-2xl font-semibold mb-4 text-white">Update Product Status</h2>
+                        <h2 class="text-2xl font-semibold mb-4 text-white">Log New Product Event</h2>
                         <form id="updateStatusForm" class="space-y-4">
-                            <input type="text" id="logisticsProductId" placeholder="Scan or Enter Product ID" class="form-input" required>
-                            <input type="text" id="location" placeholder="Current Location (e.g., Port of Miami)" class="form-input" required>
-                            <select id="status" class="form-input" required>
+                            <input type="text" id="logistics_item_id" placeholder="Enter Product ID to Update" class="form-input" required>
+                            <input type="text" id="logistics_customer" placeholder="Current Holder (e.g., RetailerY)" class="form-input" required>
+                            <select id="order_status" class="form-input" required>
+                                <option value="Shipped">Shipped</option>
                                 <option value="In Transit">In Transit</option>
-                                <option value="Warehouse">In Warehouse</option>
-                                <option value="Out for Delivery">Out for Delivery</option>
-                                <option value="Delivered to Retailer">Delivered to Retailer</option>
+                                <option value="Delivered">Delivered</option>
+                                <option value="Cancelled">Cancelled</option>
                             </select>
                             <button type="submit" class="submit-button w-full text-white py-3 rounded-lg font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 focus:ring-offset-slate-900 flex items-center justify-center">
-                                <span class="button-text">Log Update on Chain</span>
+                                <span class="button-text">Log Event on Chain</span>
                                 <div class="spinner hidden ml-2"></div>
                             </button>
                         </form>
@@ -247,8 +229,8 @@
     <!-- Modal for displaying QR code and product ID -->
     <div id="productModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
         <div class="bg-slate-800 border border-slate-700 rounded-xl shadow-2xl p-8 text-center max-w-sm w-full fade-in">
-            <h3 class="text-xl font-bold text-white mb-2">Product Registered!</h3>
-            <p class="text-slate-400 mb-4">Attach this QR code to the physical product.</p>
+            <h3 class="text-xl font-bold text-white mb-2">Product QR Code</h3>
+            <p class="text-slate-400 mb-4">This QR code represents the Product ID.</p>
             <div class="bg-white rounded-lg inline-block p-4">
                 <canvas id="qrCodeCanvas"></canvas>
             </div>
@@ -269,8 +251,13 @@
     </div>
 
     <script>
-        // --- MOCK BLOCKCHAIN / DATABASE ---
-        let productLedger = [];
+        // --- SUPABASE SETUP ---
+        const SUPABASE_URL = 'https://vklcjawpxixkbmqkmfve.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrbGNqYXdweGl4a2JtcWttZnZlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0MjE5MDAsImV4cCI6MjA3NDk5NzkwMH0.jTqbxoLAnBjr6vAOOpvCobMrs71HhrEDAAfuWSVFRRA';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // --- GLOBAL STATE ---
+        let allProductEvents = [];
 
         // --- DOM ELEMENTS ---
         const tabs = document.querySelectorAll('.tab-btn');
@@ -283,43 +270,22 @@
         const modalProductId = document.getElementById('modalProductId');
 
         // --- INITIALIZATION ---
-        document.addEventListener('DOMContentLoaded', () => {
-            const demoProducts = [
-                { id: 'PROD-123-XYZ', name: 'Chronos Tourbillon Watch', origin: 'Geneva, Switzerland', certifications: 'COSC Certified, Geneva Seal', batchId: 'BATCH-7890' },
-                { id: 'PROD-456-ABC', name: 'Aura Headphones', origin: 'Cupertino, USA', certifications: 'Hi-Res Audio, Bluetooth 5.2', batchId: 'BATCH-AU-01' },
-                { id: 'PROD-789-QWE', name: 'Nomad Pro Backpack', origin: 'Vancouver, Canada', certifications: 'Cordura Fabric, YKK Zippers', batchId: 'BATCH-NP-02' },
-                { id: 'PROD-101-HGT', name: 'Helios Aviator Sunglasses', origin: 'Milan, Italy', certifications: 'UV400 Protection, Polarized', batchId: 'BATCH-HS-03' },
-                { id: 'PROD-212-TER', name: 'Terra Waterproof Boots', origin: 'Portland, USA', certifications: 'Gore-Tex, Vibram Sole', batchId: 'BATCH-TB-04' }
-            ];
-
-            demoProducts.forEach((p, index) => {
-                const newProduct = { ...p, history: [] };
-                newProduct.history.push({ timestamp: new Date(Date.now() - 86400000 * (demoProducts.length - index)).toLocaleString(), status: 'Registered by Manufacturer', location: p.origin, details: {} });
-                if (index < 4) newProduct.history.push({ timestamp: new Date(Date.now() - 86400000 * (demoProducts.length - index - 0.5)).toLocaleString(), status: 'In Transit', location: 'International Airport', details: { temp: '20°C', humidity: '55%' } });
-                if (index < 2) newProduct.history.push({ timestamp: new Date().toLocaleString(), status: 'Delivered to Retailer', location: 'Main Street Boutique', details: { temp: '22°C', humidity: '60%' } });
-                productLedger.push(newProduct);
-            });
-            
-            renderRegisteredProducts();
-            renderDemoIds();
-
-            document.querySelector('details').addEventListener('toggle', event => {
-                const arrow = event.target.querySelector('.details-arrow');
-                if (event.target.open) {
-                    arrow.classList.add('rotate-180');
-                } else {
-                    arrow.classList.remove('rotate-180');
-                }
-            });
+        document.addEventListener('DOMContentLoaded', async () => {
+            await fetchAndRenderProducts();
         });
 
-
-        // --- UI LOGIC & HELPERS ---
-        
-        function findProductById(id) {
-            return productLedger.find(p => p.id.toUpperCase() === id.toUpperCase());
+        async function fetchAndRenderProducts() {
+            const { data, error } = await supabaseClient.from('products').select('*');
+            if (error) {
+                showToast('Error fetching products from database.', true);
+                console.error(error);
+                return;
+            }
+            allProductEvents = data;
+            renderRegisteredProducts();
         }
 
+        // --- UI LOGIC & HELPERS ---
         function toggleSpinner(form, show) {
             const button = form.querySelector('.submit-button');
             const buttonText = button.querySelector('.button-text');
@@ -334,7 +300,7 @@
                     button.disabled = false;
                     buttonText.style.opacity = '1';
                     spinner.classList.add('hidden');
-                }, 300); // Small delay to prevent flickering
+                }, 300);
             }
         }
 
@@ -359,16 +325,14 @@
             });
         }
         
-        // Apply common styles to tab buttons
         tabs.forEach(tab => {
             tab.className = 'flex items-center justify-center w-1/2 md:w-auto py-3 px-4 text-center border-b-2 border-transparent font-medium text-sm cursor-pointer transition-colors duration-200 text-slate-400 hover:text-sky-400';
-            if(tab.dataset.tab === 'manufacturer') { // Set initial active tab
+            if(tab.dataset.tab === 'manufacturer') {
                 tab.classList.add('tab-active');
                 tab.classList.remove('text-slate-400');
             }
         });
 
-        // Apply common styles to form inputs
         document.querySelectorAll('.form-input').forEach(input => {
             input.className = 'w-full px-4 py-3 bg-slate-800/60 border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition shadow-sm text-white placeholder-slate-400';
         });
@@ -406,61 +370,59 @@
         });
 
         // --- MANUFACTURER LOGIC ---
-        registerForm.addEventListener('submit', (e) => {
+        registerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             toggleSpinner(registerForm, true);
 
-            setTimeout(() => { // Simulate network delay
-                const productName = document.getElementById('productName').value;
-                const productOrigin = document.getElementById('productOrigin').value;
-                const certifications = document.getElementById('productCert').value;
-                const batchId = document.getElementById('batchId').value;
-                
-                const productId = `PROD-${Math.random().toString(36).substring(2, 5).toUpperCase()}-${Math.random().toString(36).substring(2, 5).toUpperCase()}`;
+            const newRecord = {
+                record_id: `R-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+                item_id: document.getElementById('item_id').value,
+                supplier: document.getElementById('supplier').value,
+                serial_no: document.getElementById('serial_no').value,
+                customer: document.getElementById('customer').value,
+                quantity: parseInt(document.getElementById('quantity').value, 10),
+                order_status: 'Registered',
+                payment_status: 'Paid',
+                timestamp: new Date().toISOString(),
+                // Add other fields with default/generated values to match your table schema
+                tx_id: `TX-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+                env_temp_c: 25.0,
+                env_humidity_pct: 60.0,
+                gps_lat: 19.0760, // Default location
+                gps_lon: 72.8777
+            };
 
-                const newProduct = {
-                    id: productId,
-                    name: productName,
-                    origin: productOrigin,
-                    certifications: certifications,
-                    batchId: batchId,
-                    history: [{
-                        timestamp: new Date().toLocaleString(),
-                        status: 'Registered by Manufacturer',
-                        location: productOrigin,
-                        details: {}
-                    }]
-                };
-
-                productLedger.push(newProduct);
-                renderRegisteredProducts();
-                renderDemoIds();
-                openModal(productId);
+            const { error } = await supabaseClient.from('products').insert([newRecord]);
+            
+            if (error) {
+                showToast(`Error: ${error.message}`, true);
+                console.error(error);
+            } else {
+                showToast('Product event registered successfully!');
                 registerForm.reset();
-                showToast('Product registered successfully!');
-                toggleSpinner(registerForm, false);
-            }, 500);
+                await fetchAndRenderProducts(); // Refresh the list
+                openModal(newRecord.item_id);
+            }
+
+            toggleSpinner(registerForm, false);
         });
         
         function renderRegisteredProducts() {
             const list = document.getElementById('registeredProductsList');
-            if (productLedger.length === 0) {
-                list.innerHTML = `
-                    <div class="text-center py-10 px-4">
-                        <svg class="w-12 h-12 mx-auto text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4M4 7s0 0 0 0l8 5 8-5s0 0 0 0"></path></svg>
-                        <h3 class="mt-2 text-sm font-medium text-white">No Products</h3>
-                        <p class="mt-1 text-sm text-slate-400">Register a product to see it here.</p>
-                    </div>
-                `;
+            const uniqueProducts = [...new Map(allProductEvents.map(item => [item.item_id, item])).values()];
+
+            if (uniqueProducts.length === 0) {
+                list.innerHTML = `<div class="text-center py-10 px-4"><p class="text-slate-400">No products found in the database.</p></div>`;
                 return;
             }
-            list.innerHTML = productLedger.slice().reverse().map(p => `
+
+            list.innerHTML = uniqueProducts.sort((a,b) => a.item_id.localeCompare(b.item_id)).map(p => `
                  <div class="product-item flex items-center justify-between bg-slate-800/50 p-3 rounded-lg border border-slate-700">
                     <div>
-                        <p class="font-semibold text-white">${p.name}</p>
-                        <p class="text-sm text-slate-400 font-mono break-all">${p.id}</p>
+                        <p class="font-semibold text-white">${p.supplier}</p>
+                        <p class="text-sm text-slate-400 font-mono break-all">${p.item_id}</p>
                     </div>
-                    <button onclick="openModal('${p.id}')" class="p-2 rounded-md hover:bg-slate-700 transition flex-shrink-0 ml-2" title="Show QR Code">
+                    <button onclick="openModal('${p.item_id}')" class="p-2 rounded-md hover:bg-slate-700 transition flex-shrink-0 ml-2" title="Show QR Code">
                         <svg class="w-5 h-5 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                           <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-1.036.84-1.875 1.875-1.875h4.5c1.036 0 1.875.84 1.875 1.875v4.5c0 1.036-.84 1.875-1.875 1.875h-4.5A1.875 1.875 0 0 1 3.75 9.375v-4.5zM3.75 14.625c0-1.036.84-1.875 1.875-1.875h4.5c1.036 0 1.875.84 1.875 1.875v4.5c0 1.036-.84 1.875-1.875 1.875h-4.5a1.875 1.875 0 0 1-1.875-1.875v-4.5zM13.5 4.875c0-1.036.84-1.875 1.875-1.875h4.5c1.036 0 1.875.84 1.875 1.875v4.5c0 1.036-.84 1.875-1.875 1.875h-4.5A1.875 1.875 0 0 1 13.5 9.375v-4.5z" />
                           <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 14.625v4.5c0 1.036.84 1.875 1.875 1.875h4.5c1.036 0 1.875-.84 1.875-1.875v-4.5c0-1.036-.84-1.875-1.875-1.875h-4.5a1.875 1.875 0 0 0-1.875 1.875z" />
@@ -470,52 +432,47 @@
             `).join('');
         }
         
-        function renderDemoIds() {
-            const tableBody = document.getElementById('demo-ids-table');
-            tableBody.innerHTML = productLedger.map(p => `
-                <tr class="border-b border-slate-700/50">
-                    <td class="py-2 pr-2 text-slate-300">${p.name}</td>
-                    <td class="py-2 pl-2 font-mono text-sky-400">${p.id}</td>
-                </tr>
-            `).join('');
-        }
-
         // --- LOGISTICS LOGIC ---
-        updateStatusForm.addEventListener('submit', e => {
+        updateStatusForm.addEventListener('submit', async e => {
             e.preventDefault();
             toggleSpinner(updateStatusForm, true);
             const infoContainer = document.getElementById('logisticsProductInfo');
             infoContainer.classList.add('hidden');
 
-            setTimeout(() => {
-                const productId = document.getElementById('logisticsProductId').value;
-                const location = document.getElementById('location').value;
-                const status = document.getElementById('status').value;
+            const itemId = document.getElementById('logistics_item_id').value;
+            const productEvents = allProductEvents.filter(p => p.item_id === itemId);
+            if(productEvents.length === 0) {
+                 showToast('Product ID not found in database.', true);
+                 toggleSpinner(updateStatusForm, false);
+                 return;
+            }
 
-                const product = findProductById(productId);
-                if (!product) {
-                    showToast('Product ID not found.', true);
-                    toggleSpinner(updateStatusForm, false);
-                    return;
-                }
+            const lastEvent = productEvents.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
 
-                const iotData = {
-                    temp: `${(Math.random() * 5 + 18).toFixed(1)}°C`,
-                    humidity: `${(Math.random() * 10 + 55).toFixed(1)}%`
-                };
+            const newRecord = {
+                ...lastEvent, // Copy most data from the last event
+                record_id: `R-${Math.random().toString(36).substring(2, 8).toUpperCase()}`, // Let Supabase generate this
+                id: null, // Let Supabase generate this
+                order_status: document.getElementById('order_status').value,
+                customer: document.getElementById('logistics_customer').value,
+                timestamp: new Date().toISOString(),
+                tx_id: `TX-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+                env_temp_c: (Math.random() * 5 + 18).toFixed(1),
+                env_humidity_pct: (Math.random() * 10 + 55).toFixed(1),
+            };
 
-                product.history.push({
-                    timestamp: new Date().toLocaleString(),
-                    status: status,
-                    location: location,
-                    details: iotData
-                });
-                
-                showToast('Product status updated on chain!');
+            const { error } = await supabaseClient.from('products').insert([newRecord]);
+            
+            if (error) {
+                showToast(`Error: ${error.message}`, true);
+                console.error(error);
+            } else {
+                showToast('Logistics event added successfully!');
                 updateStatusForm.reset();
-                renderProductInfo(product, 'logisticsProductInfo');
-                toggleSpinner(updateStatusForm, false);
-            }, 500);
+                await fetchAndRenderProducts();
+                renderProductInfo(itemId, 'logisticsProductInfo');
+            }
+            toggleSpinner(updateStatusForm, false);
         });
 
         // --- RETAILER LOGIC ---
@@ -527,27 +484,29 @@
 
             setTimeout(() => {
                 const productId = document.getElementById('retailerProductId').value;
-                const product = findProductById(productId);
+                const productEvents = allProductEvents.filter(p => p.item_id.toUpperCase() === productId.toUpperCase());
 
-                if (!product) {
+                if (productEvents.length === 0) {
                     showToast('Product ID not found.', true);
                     toggleSpinner(verifyProductForm, false);
                     return;
                 }
                 
-                renderProductInfo(product, 'retailerProductInfo', true);
+                renderProductInfo(productId, 'retailerProductInfo', true);
                 toggleSpinner(verifyProductForm, false);
             }, 500);
         });
         
         // --- SHARED RENDERING LOGIC ---
         
-        function renderProductInfo(product, elementId, showVerification = false) {
+        function renderProductInfo(productId, elementId, showVerification = false) {
              const container = document.getElementById(elementId);
-             
+             const productHistory = allProductEvents.filter(p => p.item_id.toUpperCase() === productId.toUpperCase()).sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
+             const product = productHistory[0]; // Base details from the first event
+
              let verificationHTML = '';
              if(showVerification) {
-                const isGenuine = product.history.some(entry => entry.status === 'Delivered to Retailer');
+                const isGenuine = productHistory.some(entry => entry.order_status === 'Delivered');
                 verificationHTML = `
                     <div class="p-4 rounded-lg ${isGenuine ? 'bg-green-900/50 border-green-500/50' : 'bg-orange-900/50 border-orange-500/50'} border mb-4">
                         <div class="flex items-center">
@@ -563,16 +522,15 @@
 
              container.innerHTML = `
                 ${verificationHTML}
-                <h3 class="text-xl font-semibold mb-2 text-white">${product.name}</h3>
-                <p class="text-sm text-slate-400 font-mono mb-4 break-all">${product.id}</p>
+                <h3 class="text-xl font-semibold mb-2 text-white">${product.supplier} Product</h3>
+                <p class="text-sm text-slate-400 font-mono mb-4 break-all">${product.item_id}</p>
                 <div class="space-y-1 text-sm mb-4">
-                    <p><strong>Origin:</strong> ${product.origin}</p>
-                    <p><strong>Batch ID:</strong> ${product.batchId}</p>
-                    <p><strong>Certifications:</strong> ${product.certifications}</p>
+                    <p><strong>Serial No:</strong> ${product.serial_no}</p>
+                    <p><strong>Quantity:</strong> ${product.quantity}</p>
                 </div>
                 <h4 class="font-semibold text-white mb-2">Provenance History</h4>
                 <div class="border-t border-slate-700 pt-4 max-h-60 overflow-y-auto pr-2">
-                    ${generateHistoryTimeline(product.history)}
+                    ${generateHistoryTimeline(productHistory)}
                 </div>
              `;
              container.classList.remove('hidden');
@@ -581,11 +539,10 @@
 
         function generateHistoryTimeline(history) {
             const statusIcons = {
-                'Registered by Manufacturer': '<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>',
+                'Registered': '<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>',
+                'Shipped': '<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10l2-2h8a1 1 0 001-1z"></path></svg>',
                 'In Transit': '<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>',
-                'Warehouse': '<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>',
-                'Out for Delivery': '<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10l2-2h8a1 1 0 001-1z"></path></svg>',
-                'Delivered to Retailer': '<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>'
+                'Delivered': '<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>',
             };
 
             return `
@@ -593,13 +550,13 @@
                 ${history.slice().reverse().map((entry) => `
                     <li class="mb-6 ml-6">
                         <span class="absolute flex items-center justify-center w-6 h-6 bg-sky-600 rounded-full -left-3 ring-8 ring-slate-800/60">
-                            ${statusIcons[entry.status] || ''}
+                            ${statusIcons[entry.order_status] || ''}
                         </span>
                         <div>
-                            <p class="font-semibold text-white">${entry.status}</p>
-                            <p class="text-sm text-slate-400">${entry.location}</p>
-                            <time class="text-xs text-slate-500">${entry.timestamp}</time>
-                            ${Object.keys(entry.details).length > 0 ? `<div class="mt-1 text-xs font-mono bg-slate-900/80 border border-slate-700 rounded p-1 inline-block">Temp: ${entry.details.temp} | Humidity: ${entry.details.humidity}</div>` : ''}
+                            <p class="font-semibold text-white">${entry.order_status}</p>
+                            <p class="text-sm text-slate-400">Holder: ${entry.customer}</p>
+                            <time class="text-xs text-slate-500">${new Date(entry.timestamp).toLocaleString()}</time>
+                            <div class="mt-1 text-xs font-mono bg-slate-900/80 border border-slate-700 rounded p-1 inline-block">Temp: ${entry.env_temp_c}°C | Humidity: ${entry.env_humidity_pct}%</div>
                         </div>
                     </li>
                 `).join('')}
@@ -611,8 +568,4 @@
 
 </body>
 </html>
-
-
-
-
 
