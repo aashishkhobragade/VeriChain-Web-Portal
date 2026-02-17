@@ -1,0 +1,223 @@
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #020617;
+            /* Even darker slate background */
+            background-image: radial-gradient(circle at top right, rgba(56, 189, 248, 0.15), transparent 40%), radial-gradient(circle at bottom left, rgba(139, 92, 246, 0.15), transparent 50%);
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .tab-btn {
+            position: relative;
+        }
+
+        .tab-btn::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            transform: scaleX(0);
+            background-color: #38bdf8;
+            transition: transform 0.3s ease-in-out;
+            transform-origin: center;
+        }
+
+        .tab-btn:hover::after,
+        .tab-active::after {
+            transform: scaleX(1);
+        }
+
+        .tab-active {
+            color: #38bdf8;
+            font-weight: 600;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card {
+            background-color: rgba(15, 23, 42, 0.65);
+            border-radius: 0.75rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            transition: box-shadow 0.3s ease, border-color 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 0 25px rgba(56, 189, 248, 0.1);
+            border-color: rgba(56, 189, 248, 0.4);
+        }
+
+        .submit-button {
+            background-image: linear-gradient(to right, #0ea5e9, #2563eb);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px 0 rgba(56, 189, 248, 0.2);
+        }
+
+        .submit-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px 0 rgba(56, 189, 248, 0.3);
+        }
+
+        .spinner {
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 2px solid #fff;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #4a5568;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #718096;
+        }
+
+        details>summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .logo-anim {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+
+            100% {
+                transform: translateY(0px);
+            }
+        }
+
+        .product-item {
+            transition: transform 0.2s ease, background-color 0.2s ease;
+        }
+
+        .product-item:hover {
+            transform: translateX(4px);
+            background-color: rgba(30, 41, 59, 0.8);
+        }
+
+        /* Dashboard & Map Styles */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        #map {
+            z-index: 1;
+            /* Ensure map stays below modals/dropdowns */
+        }
+
+        /* Leaflet customization to match theme */
+        .leaflet-container {
+            background: #0f172a !important;
+            font-family: 'Inter', sans-serif !important;
+        }
+
+        .leaflet-popup-content-wrapper,
+        .leaflet-popup-tip {
+            background: rgba(30, 41, 59, 0.95) !important;
+            color: #cbd5e1 !important;
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .leaflet-popup-content b {
+            color: #fff;
+        }
+
+        /* Transaction List Styles */
+        .tx-item {
+            border-left: 2px solid #334155;
+            padding-left: 1rem;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .tx-item:hover {
+            border-left-color: #38bdf8;
+            background: rgba(56, 189, 248, 0.05);
+        }
+
+        .tx-hash {
+            font-family: 'Courier New', Courier, monospace;
+            letter-spacing: -0.5px;
+        }
+
+        /* Footer & Status */
+        .status-dot {
+            height: 8px;
+            width: 8px;
+            background-color: #22c55e;
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+            animation: pulse-green 2s infinite;
+        }
+
+        @keyframes pulse-green {
+            0% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+            }
+
+            70% {
+                transform: scale(1);
+                box-shadow: 0 0 0 6px rgba(34, 197, 94, 0);
+            }
+
+            100% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+            }
+        }

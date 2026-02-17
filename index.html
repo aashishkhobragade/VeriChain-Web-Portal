@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,141 +9,71 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #020617; /* Even darker slate background */
-            background-image: radial-gradient(circle at top right, rgba(56, 189, 248, 0.15), transparent 40%), radial-gradient(circle at bottom left, rgba(139, 92, 246, 0.15), transparent 50%);
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-            -webkit-tap-highlight-color: transparent;
-        }
-        .tab-btn {
-            position: relative;
-        }
-        .tab-btn::after {
-            content: '';
-            position: absolute;
-            bottom: -1px;
-            left: 0;
-            right: 0;
-            height: 2px;
-            transform: scaleX(0);
-            background-color: #38bdf8;
-            transition: transform 0.3s ease-in-out;
-            transform-origin: center;
-        }
-        .tab-btn:hover::after, .tab-active::after {
-            transform: scaleX(1);
-        }
-        .tab-active {
-            color: #38bdf8;
-            font-weight: 600;
-        }
-        .fade-in {
-            animation: fadeIn 0.5s ease-in-out;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .card {
-            background-color: rgba(15, 23, 42, 0.65);
-            border-radius: 0.75rem;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            transition: box-shadow 0.3s ease, border-color 0.3s ease;
-        }
-        .card:hover {
-            box-shadow: 0 0 25px rgba(56, 189, 248, 0.1);
-            border-color: rgba(56, 189, 248, 0.4);
-        }
-        .submit-button {
-            background-image: linear-gradient(to right, #0ea5e9, #2563eb);
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px 0 rgba(56, 189, 248, 0.2);
-        }
-        .submit-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px 0 rgba(56, 189, 248, 0.3);
-        }
-        .spinner {
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top: 2px solid #fff;
-            width: 16px;
-            height: 16px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        /* Custom scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: rgba(15, 23, 42, 0.5);
-            border-radius: 10px;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #4a5568;
-            border-radius: 10px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #718096;
-        }
-        details > summary::-webkit-details-marker {
-            display: none;
-        }
-        .logo-anim {
-            animation: float 6s ease-in-out infinite;
-        }
-        @keyframes float {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-            100% { transform: translateY(0px); }
-        }
-        .product-item {
-            transition: transform 0.2s ease, background-color 0.2s ease;
-        }
-        .product-item:hover {
-            transform: translateX(4px);
-            background-color: rgba(30, 41, 59, 0.8);
-        }
-    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.5/ethers.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <link rel="stylesheet" href="css/styles.css">
 </head>
+
 <body class="bg-slate-900 text-slate-300">
 
     <div id="app" class="max-w-7xl mx-auto p-4 md:p-8">
 
         <header class="mb-10 text-center">
             <h1 class="text-4xl md:text-5xl font-extrabold text-white tracking-tight flex items-center justify-center">
-                <svg class="w-10 h-10 mr-4 text-sky-400 logo-anim" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                <svg class="w-10 h-10 mr-4 text-sky-400 logo-anim" xmlns="http://www.w3.org/2000/svg" fill="none"
+                    viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75" />
                 </svg>
                 VeriChain
             </h1>
             <p class="text-slate-400 mt-2 text-lg">A decentralized solution for product provenance and authenticity.</p>
+            <div id="wallet-badge" onclick="Web3Service.connectWallet()"
+                class="absolute top-4 right-4 hidden md:flex items-center space-x-2 bg-slate-800/80 px-4 py-2 rounded-full border border-slate-700 cursor-pointer hover:bg-slate-700 transition">
+                <div class="w-2 h-2 bg-slate-500 rounded-full"></div>
+                <span class="text-xs text-slate-300 font-mono">Connect Wallet</span>
+            </div>
         </header>
 
         <!-- Role Tabs -->
         <div class="mb-8 border-b border-slate-700">
             <nav class="flex flex-wrap -mb-px justify-center" aria-label="Tabs">
-                <button onclick="switchTab('manufacturer')" class="tab-btn tab-active" data-tab="manufacturer">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                <button onclick="switchTab('dashboard')" class="tab-btn tab-active" data-tab="dashboard">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z">
+                        </path>
+                    </svg>
+                    Dashboard
+                </button>
+                <button onclick="switchTab('manufacturer')" class="tab-btn" data-tab="manufacturer">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
+                        </path>
+                    </svg>
                     Manufacturer
                 </button>
                 <button onclick="switchTab('logistics')" class="tab-btn" data-tab="logistics">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10l2-2h8a1 1 0 001-1zM21 11.5l-2-2.5-2 2.5M17 11.5V14"></path></svg>
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10l2-2h8a1 1 0 001-1zM21 11.5l-2-2.5-2 2.5M17 11.5V14">
+                        </path>
+                    </svg>
                     Logistics
                 </button>
                 <button onclick="switchTab('retailer')" class="tab-btn" data-tab="retailer">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                    </svg>
                     Retailer
                 </button>
             </nav>
@@ -150,18 +81,110 @@
 
         <!-- Main Content Area -->
         <main>
-            <!-- Manufacturer Interface -->
+            <!-- Dashboard Interface -->
+            <div id="dashboard" class="tab-content fade-in">
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="card p-6 flex items-center justify-between">
+                        <div>
+                            <p class="text-slate-400 text-sm font-medium">Total Products</p>
+                            <h3 class="text-3xl font-bold text-white mt-1" id="stat-total">0</h3>
+                        </div>
+                        <div class="p-3 bg-sky-500/10 rounded-full">
+                            <svg class="w-8 h-8 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="card p-6 flex items-center justify-between">
+                        <div>
+                            <p class="text-slate-400 text-sm font-medium">In Transit</p>
+                            <h3 class="text-3xl font-bold text-white mt-1" id="stat-transit">0</h3>
+                        </div>
+                        <div class="p-3 bg-purple-500/10 rounded-full">
+                            <svg class="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10l2-2h8a1 1 0 001-1zM21 11.5l-2-2.5-2 2.5M17 11.5V14">
+                                </path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="card p-6 flex items-center justify-between">
+                        <div>
+                            <p class="text-slate-400 text-sm font-medium">Delivered</p>
+                            <h3 class="text-3xl font-bold text-white mt-1" id="stat-delivered">0</h3>
+                        </div>
+                        <div class="p-3 bg-green-500/10 rounded-full">
+                            <svg class="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts & Map Row -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                    <!-- Status Chart -->
+                    <div class="card p-6">
+                        <h3 class="text-xl font-semibold text-white mb-6">Product Status Distribution</h3>
+                        <div class="relative h-64 w-full">
+                            <canvas id="statusChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Supply Chain Map -->
+                    <div class="card p-6 flex flex-col">
+                        <h3 class="text-xl font-semibold text-white mb-4">Live Supply Chain Map</h3>
+                        <div id="map" class="w-full h-64 rounded-lg z-0"></div>
+                    </div>
+                </div>
+
+                <!-- Network Activity & Transactions -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+                    <!-- Network Activity Line Chart -->
+                    <div class="card p-6 lg:col-span-2">
+                        <h3 class="text-xl font-semibold text-white mb-6">Network Activity (Last 30 Days)</h3>
+                        <div class="relative h-64 w-full">
+                            <canvas id="activityChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Recent Transactions -->
+                    <div class="card p-6">
+                        <h3 class="text-xl font-semibold text-white mb-4">Recent Blockchain Transactions</h3>
+                        <div class="overflow-y-auto max-h-64 space-y-3" id="recentTransactionsList">
+                            <!-- Transactions injected here -->
+                            <div class="animate-pulse flex space-x-4">
+                                <div class="flex-1 space-y-4 py-1">
+                                    <div class="h-4 bg-slate-700 rounded w-3/4"></div>
+                                    <div class="space-y-2">
+                                        <div class="h-4 bg-slate-700 rounded"></div>
+                                        <div class="h-4 bg-slate-700 rounded w-5/6"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div id="manufacturer" class="tab-content fade-in">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div class="card p-6">
                         <h2 class="text-2xl font-semibold mb-4 text-white">Register New Product Event</h2>
                         <form id="registerProductForm" class="space-y-4">
-                            <input type="text" id="item_id" placeholder="Product ID (e.g., PROD-A100)" class="form-input" required>
-                            <input type="text" id="supplier" placeholder="Supplier Name (e.g., EpsilonCo)" class="form-input" required>
-                            <input type="text" id="serial_no" placeholder="Serial Number (e.g., SN-A100-1234)" class="form-input" required>
-                            <input type="text" id="customer" placeholder="Customer (e.g., DistributorX)" class="form-input" required>
-                             <input type="number" id="quantity" placeholder="Quantity" class="form-input" required>
-                            <button type="submit" class="submit-button w-full text-white py-3 rounded-lg font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 focus:ring-offset-slate-900 flex items-center justify-center">
+                            <input type="text" id="item_id" placeholder="Product ID (e.g., PROD-A100)"
+                                class="form-input" required>
+                            <input type="text" id="supplier" placeholder="Supplier Name (e.g., EpsilonCo)"
+                                class="form-input" required>
+                            <input type="text" id="serial_no" placeholder="Serial Number (e.g., SN-A100-1234)"
+                                class="form-input" required>
+                            <input type="text" id="customer" placeholder="Customer (e.g., DistributorX)"
+                                class="form-input" required>
+                            <input type="number" id="quantity" placeholder="Quantity" class="form-input" required>
+                            <button type="submit"
+                                class="submit-button w-full text-white py-3 rounded-lg font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 focus:ring-offset-slate-900 flex items-center justify-center">
                                 <span class="button-text">Register Event</span>
                                 <div class="spinner hidden ml-2"></div>
                             </button>
@@ -170,10 +193,11 @@
                     <div class="card p-6">
                         <h2 class="text-2xl font-semibold mb-4 text-white">Registered Products</h2>
                         <div id="registeredProductsList" class="space-y-3 max-h-96 overflow-y-auto pr-2">
-                           <div class="text-center py-10 px-4">
-                                <div class="spinner mx-auto" style="width: 32px; height: 32px; border-width: 3px;"></div>
+                            <div class="text-center py-10 px-4">
+                                <div class="spinner mx-auto" style="width: 32px; height: 32px; border-width: 3px;">
+                                </div>
                                 <p class="mt-4 text-slate-400">Loading products from database...</p>
-                           </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -185,49 +209,107 @@
                     <div class="card p-6">
                         <h2 class="text-2xl font-semibold mb-4 text-white">Log New Product Event</h2>
                         <form id="updateStatusForm" class="space-y-4">
-                            <input type="text" id="logistics_item_id" placeholder="Enter Product ID to Update" class="form-input" required>
-                            <input type="text" id="logistics_customer" placeholder="Current Holder (e.g., RetailerY)" class="form-input" required>
+                            <input type="text" id="logistics_item_id" placeholder="Enter Product ID to Update"
+                                class="form-input" required>
+                            <input type="text" id="logistics_customer" placeholder="Current Holder (e.g., RetailerY)"
+                                class="form-input" required>
                             <select id="order_status" class="form-input" required>
                                 <option value="Shipped">Shipped</option>
                                 <option value="In Transit">In Transit</option>
                                 <option value="Delivered">Delivered</option>
                                 <option value="Cancelled">Cancelled</option>
                             </select>
-                            <button type="submit" class="submit-button w-full text-white py-3 rounded-lg font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 focus:ring-offset-slate-900 flex items-center justify-center">
+                            <button type="submit"
+                                class="submit-button w-full text-white py-3 rounded-lg font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 focus:ring-offset-slate-900 flex items-center justify-center">
                                 <span class="button-text">Log Event on Chain</span>
                                 <div class="spinner hidden ml-2"></div>
                             </button>
                         </form>
                     </div>
-                     <div id="logisticsProductInfo" class="card p-6 hidden">
-                        <!-- Product info for logistics will appear here -->
+                    <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div class="card p-6">
+                            <h3 class="text-xl font-semibold text-white mb-4">Fleet Status</h3>
+                            <div class="grid grid-cols-2 gap-4 text-center">
+                                <div class="bg-slate-800/50 p-4 rounded-lg">
+                                    <p class="text-slate-400 text-sm">Active Trucks</p>
+                                    <p class="text-2xl font-bold text-sky-400">24</p>
+                                </div>
+                                <div class="bg-slate-800/50 p-4 rounded-lg">
+                                    <p class="text-slate-400 text-sm">Avg Delivery</p>
+                                    <p class="text-2xl font-bold text-green-400">2.3 Days</p>
+                                </div>
+                                <div class="bg-slate-800/50 p-4 rounded-lg">
+                                    <p class="text-slate-400 text-sm">Pending Dispatches</p>
+                                    <p class="text-2xl font-bold text-yellow-400">7</p>
+                                </div>
+                                <div class="bg-slate-800/50 p-4 rounded-lg">
+                                    <p class="text-slate-400 text-sm">Route Issues</p>
+                                    <p class="text-2xl font-bold text-red-400">1</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card p-6">
+                            <h3 class="text-xl font-semibold text-white mb-4">Recent Shipments</h3>
+                            <div id="logisticsRecentList" class="space-y-3 max-h-48 overflow-y-auto pr-2">
+                                <!-- Injected by JS -->
+                                <p class="text-slate-500 text-sm italic">Loading fleet data...</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Retailer Interface -->
-            <div id="retailer" class="tab-content hidden">
-                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div class="card p-6">
-                        <h2 class="text-2xl font-semibold mb-4 text-white">Verify Product Authenticity</h2>
-                        <form id="verifyProductForm" class="space-y-4">
-                            <input type="text" id="retailerProductId" placeholder="Scan or Enter Product ID" class="form-input" required>
-                            <button type="submit" class="submit-button w-full text-white py-3 rounded-lg font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 focus:ring-offset-slate-900 flex items-center justify-center">
-                                <span class="button-text">Verify & View History</span>
-                                <div class="spinner hidden ml-2"></div>
-                            </button>
-                        </form>
+                <!-- Retailer Interface -->
+                <div id="retailer" class="tab-content hidden">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div class="card p-6">
+                            <h2 class="text-2xl font-semibold mb-4 text-white">Verify Product Authenticity</h2>
+                            <form id="verifyProductForm" class="space-y-4">
+                                <input type="text" id="retailerProductId" placeholder="Scan or Enter Product ID"
+                                    class="form-input" required>
+                                <button type="submit"
+                                    class="submit-button w-full text-white py-3 rounded-lg font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 focus:ring-offset-slate-900 flex items-center justify-center">
+                                    <span class="button-text">Verify & View History</span>
+                                    <div class="spinner hidden ml-2"></div>
+                                </button>
+                            </form>
+                        </div>
+                        <div id="retailerProductInfo" class="card p-6 hidden">
+                            <!-- Verification result and history will appear here -->
+                        </div>
                     </div>
-                     <div id="retailerProductInfo" class="card p-6 hidden">
-                        <!-- Verification result and history will appear here -->
+                    <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <div class="card p-6 col-span-1">
+                            <h3 class="text-xl font-semibold text-white mb-4">Sustainability Score</h3>
+                            <div class="flex flex-col items-center justify-center h-40">
+                                <div class="relative w-32 h-32">
+                                    <svg class="w-full h-full transform -rotate-90">
+                                        <circle cx="64" cy="64" r="56" stroke="rgba(255,255,255,0.1)" stroke-width="8"
+                                            fill="none"></circle>
+                                        <circle cx="64" cy="64" r="56" stroke="#22c55e" stroke-width="8" fill="none"
+                                            stroke-dasharray="351.86" stroke-dashoffset="35.18"></circle>
+                                    </svg>
+                                    <div class="absolute inset-0 flex items-center justify-center flex-col">
+                                        <span class="text-3xl font-bold text-white">92%</span>
+                                        <span class="text-xs text-green-400">Eco-Friendly</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card p-6 col-span-1 md:col-span-2">
+                            <h3 class="text-xl font-semibold text-white mb-4">Store Inventory</h3>
+                            <div id="retailerInventoryList" class="space-y-2 max-h-48 overflow-y-auto pr-2">
+                                <!-- Injected by JS -->
+                                <p class="text-slate-500 text-sm italic">Syncing inventory...</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
         </main>
     </div>
 
     <!-- Modal for displaying QR code and product ID -->
-    <div id="productModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
+    <div id="productModal"
+        class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
         <div class="bg-slate-800 border border-slate-700 rounded-xl shadow-2xl p-8 text-center max-w-sm w-full fade-in">
             <h3 class="text-xl font-bold text-white mb-2">Product QR Code</h3>
             <p class="text-slate-400 mb-4">This QR code represents the Product ID.</p>
@@ -238,334 +320,38 @@
             <div class="flex items-center justify-between font-mono bg-slate-900 p-2 rounded-md text-sm">
                 <p id="modalProductId" class="break-all text-left text-slate-300"></p>
                 <button id="copyIdButton" class="ml-2 p-2 rounded-md hover:bg-slate-700 transition">
-                    <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                    <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z">
+                        </path>
+                    </svg>
                 </button>
             </div>
-            <button onclick="closeModal()" class="mt-6 w-full bg-slate-600 text-white py-2 rounded-lg font-semibold hover:bg-slate-700 transition">Close</button>
+            <button onclick="closeModal()"
+                class="mt-6 w-full bg-slate-600 text-white py-2 rounded-lg font-semibold hover:bg-slate-700 transition">Close</button>
         </div>
     </div>
-    
+
     <!-- Toast Notification -->
-    <div id="toast" class="fixed bottom-5 right-5 bg-slate-900 text-white py-3 px-6 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 border border-slate-700">
-        <p id="toastMessage"></p>
-    </div>
+    <!-- Footer -->
+    <footer class="border-t border-slate-800 mt-12 py-8 text-center text-slate-500 text-sm">
+        <div class="flex justify-center items-center space-x-6 mb-4">
+            <div class="flex items-center">
+                <span class="status-dot mr-2"></span>
+                <span class="text-slate-400">System Operational</span>
+            </div>
+            <div class="flex items-center">
+                <span class="w-2 h-2 rounded-full bg-sky-500 mr-2"></span>
+                <span class="text-slate-400">Mainnet Connected</span>
+            </div>
+        </div>
+        <p>&copy; 2026 VeriChain Decentralized Logistics. All rights reserved.</p>
+    </footer>
 
-    <script>
-        // --- SUPABASE SETUP ---
-        const SUPABASE_URL = 'https://vklcjawpxixkbmqkmfve.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrbGNqYXdweGl4a2JtcWttZnZlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0MjE5MDAsImV4cCI6MjA3NDk5NzkwMH0.jTqbxoLAnBjr6vAOOpvCobMrs71HhrEDAAfuWSVFRRA';
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-        // --- GLOBAL STATE ---
-        let allProductEvents = [];
-
-        // --- DOM ELEMENTS ---
-        const tabs = document.querySelectorAll('.tab-btn');
-        const contents = document.querySelectorAll('.tab-content');
-        const registerForm = document.getElementById('registerProductForm');
-        const updateStatusForm = document.getElementById('updateStatusForm');
-        const verifyProductForm = document.getElementById('verifyProductForm');
-        const modal = document.getElementById('productModal');
-        const copyIdButton = document.getElementById('copyIdButton');
-        const modalProductId = document.getElementById('modalProductId');
-
-        // --- INITIALIZATION ---
-        document.addEventListener('DOMContentLoaded', async () => {
-            await fetchAndRenderProducts();
-        });
-
-        async function fetchAndRenderProducts() {
-            const { data, error } = await supabaseClient.from('products').select('*');
-            if (error) {
-                showToast('Error fetching products from database.', true);
-                console.error(error);
-                return;
-            }
-            allProductEvents = data;
-            renderRegisteredProducts();
-        }
-
-        // --- UI LOGIC & HELPERS ---
-        function toggleSpinner(form, show) {
-            const button = form.querySelector('.submit-button');
-            const buttonText = button.querySelector('.button-text');
-            const spinner = button.querySelector('.spinner');
-
-            if (show) {
-                button.disabled = true;
-                buttonText.style.opacity = '0';
-                spinner.classList.remove('hidden');
-            } else {
-                setTimeout(() => {
-                    button.disabled = false;
-                    buttonText.style.opacity = '1';
-                    spinner.classList.add('hidden');
-                }, 300);
-            }
-        }
-
-        function switchTab(tabName) {
-            tabs.forEach(tab => {
-                const tabButton = tab;
-                if (tabButton.dataset.tab === tabName) {
-                    tabButton.classList.add('tab-active');
-                    tabButton.classList.remove('text-slate-500');
-                } else {
-                    tabButton.classList.remove('tab-active');
-                    tabButton.classList.add('text-slate-500');
-                }
-            });
-            contents.forEach(content => {
-                if (content.id === tabName) {
-                    content.classList.remove('hidden');
-                    content.classList.add('fade-in');
-                } else {
-                    content.classList.add('hidden');
-                }
-            });
-        }
-        
-        tabs.forEach(tab => {
-            tab.className = 'flex items-center justify-center w-1/2 md:w-auto py-3 px-4 text-center border-b-2 border-transparent font-medium text-sm cursor-pointer transition-colors duration-200 text-slate-400 hover:text-sky-400';
-            if(tab.dataset.tab === 'manufacturer') {
-                tab.classList.add('tab-active');
-                tab.classList.remove('text-slate-400');
-            }
-        });
-
-        document.querySelectorAll('.form-input').forEach(input => {
-            input.className = 'w-full px-4 py-3 bg-slate-800/60 border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition shadow-sm text-white placeholder-slate-400';
-        });
-
-        function showToast(message, isError = false) {
-            const toast = document.getElementById('toast');
-            const toastMessage = document.getElementById('toastMessage');
-            toastMessage.textContent = message;
-            toast.className = `fixed bottom-5 right-5 text-white py-3 px-6 rounded-lg shadow-lg transform translate-y-0 opacity-100 transition-all duration-300 border ${isError ? 'bg-red-500/90 border-red-400' : 'bg-slate-900/90 border-slate-700'}`;
-            setTimeout(() => {
-                 toast.className = toast.className.replace('translate-y-0 opacity-100', 'translate-y-20 opacity-0');
-            }, 3000);
-        }
-
-        function openModal(productId) {
-            modal.classList.remove('hidden');
-            modalProductId.textContent = productId;
-            new QRious({
-                element: document.getElementById('qrCodeCanvas'),
-                value: productId,
-                size: 200,
-                foreground: '#0f172a',
-                level: 'H'
-            });
-        }
-
-        function closeModal() {
-            modal.classList.add('hidden');
-        }
-
-        copyIdButton.addEventListener('click', () => {
-            navigator.clipboard.writeText(modalProductId.textContent)
-                .then(() => showToast('Product ID copied to clipboard!'))
-                .catch(err => showToast('Failed to copy ID.', true));
-        });
-
-        // --- MANUFACTURER LOGIC ---
-        registerForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            toggleSpinner(registerForm, true);
-
-            const newRecord = {
-                record_id: `R-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
-                item_id: document.getElementById('item_id').value,
-                supplier: document.getElementById('supplier').value,
-                serial_no: document.getElementById('serial_no').value,
-                customer: document.getElementById('customer').value,
-                quantity: parseInt(document.getElementById('quantity').value, 10),
-                order_status: 'Registered',
-                payment_status: 'Paid',
-                timestamp: new Date().toISOString(),
-                // Add other fields with default/generated values to match your table schema
-                tx_id: `TX-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
-                env_temp_c: 25.0,
-                env_humidity_pct: 60.0,
-                gps_lat: 19.0760, // Default location
-                gps_lon: 72.8777
-            };
-
-            const { error } = await supabaseClient.from('products').insert([newRecord]);
-            
-            if (error) {
-                showToast(`Error: ${error.message}`, true);
-                console.error(error);
-            } else {
-                showToast('Product event registered successfully!');
-                registerForm.reset();
-                await fetchAndRenderProducts(); // Refresh the list
-                openModal(newRecord.item_id);
-            }
-
-            toggleSpinner(registerForm, false);
-        });
-        
-        function renderRegisteredProducts() {
-            const list = document.getElementById('registeredProductsList');
-            const uniqueProducts = [...new Map(allProductEvents.map(item => [item.item_id, item])).values()];
-
-            if (uniqueProducts.length === 0) {
-                list.innerHTML = `<div class="text-center py-10 px-4"><p class="text-slate-400">No products found in the database.</p></div>`;
-                return;
-            }
-
-            list.innerHTML = uniqueProducts.sort((a,b) => a.item_id.localeCompare(b.item_id)).map(p => `
-                 <div class="product-item flex items-center justify-between bg-slate-800/50 p-3 rounded-lg border border-slate-700">
-                    <div>
-                        <p class="font-semibold text-white">${p.supplier}</p>
-                        <p class="text-sm text-slate-400 font-mono break-all">${p.item_id}</p>
-                    </div>
-                    <button onclick="openModal('${p.item_id}')" class="p-2 rounded-md hover:bg-slate-700 transition flex-shrink-0 ml-2" title="Show QR Code">
-                        <svg class="w-5 h-5 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-1.036.84-1.875 1.875-1.875h4.5c1.036 0 1.875.84 1.875 1.875v4.5c0 1.036-.84 1.875-1.875 1.875h-4.5A1.875 1.875 0 0 1 3.75 9.375v-4.5zM3.75 14.625c0-1.036.84-1.875 1.875-1.875h4.5c1.036 0 1.875.84 1.875 1.875v4.5c0 1.036-.84 1.875-1.875 1.875h-4.5a1.875 1.875 0 0 1-1.875-1.875v-4.5zM13.5 4.875c0-1.036.84-1.875 1.875-1.875h4.5c1.036 0 1.875.84 1.875 1.875v4.5c0 1.036-.84 1.875-1.875 1.875h-4.5A1.875 1.875 0 0 1 13.5 9.375v-4.5z" />
-                          <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 14.625v4.5c0 1.036.84 1.875 1.875 1.875h4.5c1.036 0 1.875-.84 1.875-1.875v-4.5c0-1.036-.84-1.875-1.875-1.875h-4.5a1.875 1.875 0 0 0-1.875 1.875z" />
-                        </svg>
-                    </button>
-                </div>
-            `).join('');
-        }
-        
-        // --- LOGISTICS LOGIC ---
-        updateStatusForm.addEventListener('submit', async e => {
-            e.preventDefault();
-            toggleSpinner(updateStatusForm, true);
-            const infoContainer = document.getElementById('logisticsProductInfo');
-            infoContainer.classList.add('hidden');
-
-            const itemId = document.getElementById('logistics_item_id').value;
-            const productEvents = allProductEvents.filter(p => p.item_id === itemId);
-            if(productEvents.length === 0) {
-                 showToast('Product ID not found in database.', true);
-                 toggleSpinner(updateStatusForm, false);
-                 return;
-            }
-
-            const lastEvent = productEvents.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
-
-            const newRecord = {
-                ...lastEvent, // Copy most data from the last event
-                record_id: `R-${Math.random().toString(36).substring(2, 8).toUpperCase()}`, // Let Supabase generate this
-                id: null, // Let Supabase generate this
-                order_status: document.getElementById('order_status').value,
-                customer: document.getElementById('logistics_customer').value,
-                timestamp: new Date().toISOString(),
-                tx_id: `TX-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
-                env_temp_c: (Math.random() * 5 + 18).toFixed(1),
-                env_humidity_pct: (Math.random() * 10 + 55).toFixed(1),
-            };
-
-            const { error } = await supabaseClient.from('products').insert([newRecord]);
-            
-            if (error) {
-                showToast(`Error: ${error.message}`, true);
-                console.error(error);
-            } else {
-                showToast('Logistics event added successfully!');
-                updateStatusForm.reset();
-                await fetchAndRenderProducts();
-                renderProductInfo(itemId, 'logisticsProductInfo');
-            }
-            toggleSpinner(updateStatusForm, false);
-        });
-
-        // --- RETAILER LOGIC ---
-        verifyProductForm.addEventListener('submit', e => {
-             e.preventDefault();
-             toggleSpinner(verifyProductForm, true);
-             const infoContainer = document.getElementById('retailerProductInfo');
-             infoContainer.classList.add('hidden');
-
-            setTimeout(() => {
-                const productId = document.getElementById('retailerProductId').value;
-                const productEvents = allProductEvents.filter(p => p.item_id.toUpperCase() === productId.toUpperCase());
-
-                if (productEvents.length === 0) {
-                    showToast('Product ID not found.', true);
-                    toggleSpinner(verifyProductForm, false);
-                    return;
-                }
-                
-                renderProductInfo(productId, 'retailerProductInfo', true);
-                toggleSpinner(verifyProductForm, false);
-            }, 500);
-        });
-        
-        // --- SHARED RENDERING LOGIC ---
-        
-        function renderProductInfo(productId, elementId, showVerification = false) {
-             const container = document.getElementById(elementId);
-             const productHistory = allProductEvents.filter(p => p.item_id.toUpperCase() === productId.toUpperCase()).sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
-             const product = productHistory[0]; // Base details from the first event
-
-             let verificationHTML = '';
-             if(showVerification) {
-                const isGenuine = productHistory.some(entry => entry.order_status === 'Delivered');
-                verificationHTML = `
-                    <div class="p-4 rounded-lg ${isGenuine ? 'bg-green-900/50 border-green-500/50' : 'bg-orange-900/50 border-orange-500/50'} border mb-4">
-                        <div class="flex items-center">
-                             <svg class="w-6 h-6 mr-3 flex-shrink-0 ${isGenuine ? 'text-green-400' : 'text-orange-400'}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            <div>
-                                <h3 class="font-semibold ${isGenuine ? 'text-green-300' : 'text-orange-300'}">${isGenuine ? 'Product Verified' : 'Provenance Incomplete'}</h3>
-                                <p class="text-sm ${isGenuine ? 'text-green-400' : 'text-orange-400'}">${isGenuine ? 'This product has a valid and complete supply chain history.' : 'This product is registered but has not completed its journey.'}</p>
-                            </div>
-                        </div>
-                    </div>
-                `;
-             }
-
-             container.innerHTML = `
-                ${verificationHTML}
-                <h3 class="text-xl font-semibold mb-2 text-white">${product.supplier} Product</h3>
-                <p class="text-sm text-slate-400 font-mono mb-4 break-all">${product.item_id}</p>
-                <div class="space-y-1 text-sm mb-4">
-                    <p><strong>Serial No:</strong> ${product.serial_no}</p>
-                    <p><strong>Quantity:</strong> ${product.quantity}</p>
-                </div>
-                <h4 class="font-semibold text-white mb-2">Provenance History</h4>
-                <div class="border-t border-slate-700 pt-4 max-h-60 overflow-y-auto pr-2">
-                    ${generateHistoryTimeline(productHistory)}
-                </div>
-             `;
-             container.classList.remove('hidden');
-             container.classList.add('fade-in');
-        }
-
-        function generateHistoryTimeline(history) {
-            const statusIcons = {
-                'Registered': '<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>',
-                'Shipped': '<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10l2-2h8a1 1 0 001-1z"></path></svg>',
-                'In Transit': '<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>',
-                'Delivered': '<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>',
-            };
-
-            return `
-            <ol class="relative border-l border-slate-700">
-                ${history.slice().reverse().map((entry) => `
-                    <li class="mb-6 ml-6">
-                        <span class="absolute flex items-center justify-center w-6 h-6 bg-sky-600 rounded-full -left-3 ring-8 ring-slate-800/60">
-                            ${statusIcons[entry.order_status] || ''}
-                        </span>
-                        <div>
-                            <p class="font-semibold text-white">${entry.order_status}</p>
-                            <p class="text-sm text-slate-400">Holder: ${entry.customer}</p>
-                            <time class="text-xs text-slate-500">${new Date(entry.timestamp).toLocaleString()}</time>
-                            <div class="mt-1 text-xs font-mono bg-slate-900/80 border border-slate-700 rounded p-1 inline-block">Temp: ${entry.env_temp_c}°C | Humidity: ${entry.env_humidity_pct}%</div>
-                        </div>
-                    </li>
-                `).join('')}
-            </ol>
-            `;
-        }
-
-    </script>
+    <script src="js/abi.js"></script>
+    <script src="js/web3.js"></script>
+    <script src="js/app.js"></script>
 
 </body>
-</html>
 
+</html>
