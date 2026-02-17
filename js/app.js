@@ -27,8 +27,82 @@ const modalProductId = document.getElementById('modalProductId');
 
 // --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', async () => {
-    await fetchAndRenderProducts();
+    await initApp();
 });
+
+async function initApp() {
+    const overlay = document.getElementById('initOverlay');
+    const getProgress = () => document.getElementById('initProgress'); // Dynamic getter
+    const getLog = () => document.getElementById('initLog');
+
+    // Safety: If elements missing, just return
+    if (!overlay) return;
+
+    // Force remove overlay after 8 seconds max, no matter what
+    const safetyTimeout = setTimeout(() => {
+        if (overlay.style.display !== 'none') {
+            console.warn("Forcing overlay removal due to timeout.");
+            overlay.style.display = 'none';
+        }
+    }, 8000);
+
+    try {
+        const steps = [
+            { msg: "Initializing VeriChain Core 1.0.4...", time: 800 },
+            { msg: "Connecting to Supabase Relay...", time: 1200 },
+            { msg: "Verifying Integrity of Local Cache...", time: 600 },
+            { msg: "Syncing with Ethereum Mainnet Nodes...", time: 1000 },
+            { msg: "Loading Smart Contract ABIs...", time: 500 },
+            { msg: "Establishing Secure Socket Layer...", time: 400 },
+            { msg: "System Ready.", time: 200 }
+        ];
+
+        let currentProgress = 0;
+        const stepSize = 100 / steps.length;
+        const log = getLog();
+        const progress = getProgress();
+
+        for (const step of steps) {
+            // Add log if element exists
+            if (log) {
+                const p = document.createElement('p');
+                p.textContent = `> ${step.msg}`;
+                p.className = 'typewriter-cursor';
+                log.appendChild(p);
+                log.scrollTop = log.scrollHeight;
+            }
+
+            // Simulate processing time
+            await new Promise(r => setTimeout(r, step.time));
+
+            // Remove cursor from previous line
+            if (log && log.lastElementChild) {
+                log.lastElementChild.classList.remove('typewriter-cursor');
+            }
+
+            // Update progress
+            if (progress) {
+                currentProgress += stepSize;
+                progress.style.width = `${currentProgress}%`;
+            }
+        }
+
+        // Load data
+        await fetchAndRenderProducts();
+
+    } catch (err) {
+        console.error("Init Error:", err);
+    } finally {
+        // Clear safety timeout since we are done
+        clearTimeout(safetyTimeout);
+
+        // Hide overlay
+        overlay.classList.add('opacity-0', 'pointer-events-none', 'transition-opacity', 'duration-500');
+        setTimeout(() => {
+            overlay.style.display = 'none';
+        }, 500);
+    }
+}
 
 async function fetchAndRenderProducts() {
     let { data, error } = await supabaseClient.from('products').select('*');
