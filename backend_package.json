@@ -1,0 +1,16 @@
+{
+    "name": "manufacturer-registration-backend",
+    "version": "1.0.0",
+    "description": "Backend API for Manufacturer Product Registration module",
+    "main": "backend_app.js",
+    "scripts": {
+        "start": "node backend_app.js",
+        "dev": "nodemon backend_app.js"
+    },
+    "dependencies": {
+        "cors": "^2.8.6",
+        "dotenv": "^17.3.1",
+        "express": "^5.2.1",
+        "uuid": "^13.0.0"
+    }
+}
