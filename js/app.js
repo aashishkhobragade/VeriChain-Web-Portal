@@ -1,6 +1,6 @@
 // --- SUPABASE SETUP ---
-const SUPABASE_URL = 'https://vklcjawpxixkbmqkmfve.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrbGNqYXdweGl4a2JtcWttZnZlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0MjE5MDAsImV4cCI6MjA3NDk5NzkwMH0.jTqbxoLAnBjr6vAOOpvCobMrs71HhrEDAAfuWSVFRRA';
+const SUPABASE_URL = 'https://osuwkjjxrcdaacegrvaa.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9zdXdramp4cmNkYWFjZWdydmFhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwODEzMDUsImV4cCI6MjA4NjY1NzMwNX0.2DUfrPvaNg3KYv9pT24vdUkbrGBebhzOTvAeLekRxUs';
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // --- GLOBAL STATE ---
@@ -19,7 +19,49 @@ const TILE_ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">Open
 const tabs = document.querySelectorAll('.tab-btn');
 const contents = document.querySelectorAll('.tab-content');
 const registerForm = document.getElementById('registerProductForm');
-const updateStatusForm = document.getElementById('updateStatusForm');
+const updateStatusForm = document.getElementById('updateStatusForm');    // --- RETAILER PORTAL: Record Delivery ---
+const recordDeliveryForm = document.getElementById('recordDeliveryForm');
+if (recordDeliveryForm) {
+    recordDeliveryForm.addEventListener('submit', async e => {
+        e.preventDefault();
+        toggleSpinner(recordDeliveryForm, true);
+
+        const productId = document.getElementById('delivery_product_id').value;
+        const consumerName = document.getElementById('consumer_name').value;
+
+        if (!productId || !consumerName) {
+            showToast('Please enter Product ID and Consumer Name.', true);
+            toggleSpinner(recordDeliveryForm, false);
+            return;
+        }
+
+        // Generate dummy hash for delivery
+        const dummyHash = `0x${Array(64).fill(0).map(() => Math.floor(Math.random() * 16).toString(16)).join('')}`;
+
+        // Update Supabase
+        const { data, error } = await supabaseClient
+            .from('products')
+            .update({
+                "Delivered to": consumerName,
+                "Delivery timestamp": new Date().toISOString(),
+                "Delivery blockchain hash": dummyHash,
+                "Sell by": "Retailer-X" // Assuming a fixed retailer for this portal for now
+            })
+            .eq('Product id', productId);
+
+        if (error) {
+            showToast(`Error: ${error.message}`, true);
+            console.error(error);
+        } else {
+            showToast(`Delivery Recorded! TX: ${dummyHash.substring(0, 10)}...`, false);
+            recordDeliveryForm.reset();
+            await fetchAndRenderProducts(); // Refresh dashboards
+        }
+        toggleSpinner(recordDeliveryForm, false);
+    });
+}
+
+// --- RETAILER PORTAL: Verify Product ---
 const verifyProductForm = document.getElementById('verifyProductForm');
 const modal = document.getElementById('productModal');
 const copyIdButton = document.getElementById('copyIdButton');
@@ -32,13 +74,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function initApp() {
     const overlay = document.getElementById('initOverlay');
-    const getProgress = () => document.getElementById('initProgress'); // Dynamic getter
+    const getProgress = () => document.getElementById('initProgress');
     const getLog = () => document.getElementById('initLog');
 
-    // Safety: If elements missing, just return
     if (!overlay) return;
 
-    // Force remove overlay after 8 seconds max, no matter what
     const safetyTimeout = setTimeout(() => {
         if (overlay.style.display !== 'none') {
             console.warn("Forcing overlay removal due to timeout.");
@@ -48,12 +88,10 @@ async function initApp() {
 
     try {
         const steps = [
-            { msg: "Initializing VeriChain Core 1.0.4...", time: 800 },
-            { msg: "Connecting to Supabase Relay...", time: 1200 },
-            { msg: "Verifying Integrity of Local Cache...", time: 600 },
-            { msg: "Syncing with Ethereum Mainnet Nodes...", time: 1000 },
-            { msg: "Loading Smart Contract ABIs...", time: 500 },
-            { msg: "Establishing Secure Socket Layer...", time: 400 },
+            { msg: "Initializing VeriChain Core 2.0...", time: 800 },
+            { msg: "Connecting to Supabase Cloud...", time: 1200 },
+            { msg: "Syncing Schema Definitions...", time: 600 },
+            { msg: "Verifying Integrity...", time: 1000 },
             { msg: "System Ready.", time: 200 }
         ];
 
@@ -63,7 +101,6 @@ async function initApp() {
         const progress = getProgress();
 
         for (const step of steps) {
-            // Add log if element exists
             if (log) {
                 const p = document.createElement('p');
                 p.textContent = `> ${step.msg}`;
@@ -72,31 +109,24 @@ async function initApp() {
                 log.scrollTop = log.scrollHeight;
             }
 
-            // Simulate processing time
             await new Promise(r => setTimeout(r, step.time));
 
-            // Remove cursor from previous line
             if (log && log.lastElementChild) {
                 log.lastElementChild.classList.remove('typewriter-cursor');
             }
 
-            // Update progress
             if (progress) {
                 currentProgress += stepSize;
                 progress.style.width = `${currentProgress}%`;
             }
         }
 
-        // Load data
         await fetchAndRenderProducts();
 
     } catch (err) {
         console.error("Init Error:", err);
     } finally {
-        // Clear safety timeout since we are done
         clearTimeout(safetyTimeout);
-
-        // Hide overlay
         overlay.classList.add('opacity-0', 'pointer-events-none', 'transition-opacity', 'duration-500');
         setTimeout(() => {
             overlay.style.display = 'none';
@@ -105,24 +135,23 @@ async function initApp() {
 }
 
 async function fetchAndRenderProducts() {
+    // New Schema: "Product id", "Product type", "Product detail", "Created by", etc.
     let { data, error } = await supabaseClient.from('products').select('*');
     if (error) {
-        showToast('Error fetching products via API. Loading offline mode...', true);
+        showToast('Error fetching products. Loading offline mode...', true);
         console.error(error);
-        data = []; // Fallback to empty if error, but we will add dummy data below
+        data = [];
     }
 
-    // Combine real data with dummy data for demonstration if fewer than 5 items
     if (!data || data.length < 5) {
         console.log("Loading dummy data for demonstration...");
         const dummyData = generateDummyData();
         data = [...(data || []), ...dummyData];
     }
 
-    allProductEvents = data;
+    allProductEvents = data || [];
     renderRegisteredProducts();
 
-    // Initial dashboard render if active
     if (document.querySelector('.tab-btn[data-tab="dashboard"]').classList.contains('tab-active')) {
         renderDashboard();
     }
@@ -130,14 +159,13 @@ async function fetchAndRenderProducts() {
 
 // --- DASHBOARD UPGRADES ---
 function renderBlockchainStats() {
-    // Generate simulated blockchain stats
     const blockHeight = 18293400 + Math.floor(Math.random() * 50);
     const gasPrice = (Math.random() * 10 + 15).toFixed(1);
     const avgBlockTime = (12 + Math.random() * 2).toFixed(2);
 
-    // Check if elements exist, if not, we might need to add them to HTML first.
     const statsContainer = document.getElementById('blockchainStatsRow');
     if (statsContainer) {
+        // ... (Existing blockchain stats HTML generation is fine to keep conceptual) ...
         statsContainer.innerHTML = `
             <div class="card p-4 flex items-center justify-between">
                 <div>
@@ -171,56 +199,48 @@ function renderBlockchainStats() {
 }
 
 function generateDummyData() {
-    // Enhanced dummy data generation for "100% complete" look
-    const statuses = ['Registered', 'Shipped', 'In Transit', 'In Transit', 'Delivered', 'Delivered', 'Cancelled']; // Weighted
-    const suppliers = ['EpsilonCo', 'AlphaInd', 'OmegaCorp', 'ZetaSupply', 'NanoTech', 'GlobalLogistics', 'PrimeSource', 'EcoFarm', 'TechComponents'];
-    const customers = ['Retailer-A', 'Retailer-B', 'Distributor-X', 'Logistics-Y', 'EndConsumer-Z', 'SuperMart', 'HyperLocal'];
+    const statuses = ['Registered', 'Transferred', 'Sold', 'Delivered'];
+    const creators = ['EpsilonCo', 'AlphaInd', 'OmegaCorp', 'ZetaSupply'];
+    const types = ['Electronics', 'Pharmaceuticals', 'Auto Parts', 'Luxury Goods'];
+
+    // GPS Locations for map visualization (Client-side only, not in DB anymore)
     const locations = [
-        { lat: 19.0760, lon: 72.8777, name: 'Mumbai' },
-        { lat: 28.6139, lon: 77.2090, name: 'New Delhi' },
-        { lat: 12.9716, lon: 77.5946, name: 'Bangalore' },
-        { lat: 13.0827, lon: 80.2707, name: 'Chennai' },
-        { lat: 22.5726, lon: 88.3639, name: 'Kolkata' },
-        { lat: 18.5204, lon: 73.8567, name: 'Pune' },
-        { lat: 17.3850, lon: 78.4867, name: 'Hyderabad' },
-        { lat: 23.0225, lon: 72.5714, name: 'Ahmedabad' },
-        { lat: 26.9124, lon: 75.7873, name: 'Jaipur' },
-        { lat: 9.9312, lon: 76.2673, name: 'Kochi' },
-        { lat: 21.1702, lon: 72.8311, name: 'Surat' },
-        { lat: 26.8467, lon: 80.9462, name: 'Lucknow' }
+        { lat: 19.0760, lon: 72.8777 }, { lat: 28.6139, lon: 77.2090 },
+        { lat: 12.9716, lon: 77.5946 }, { lat: 13.0827, lon: 80.2707 }
     ];
 
     const dummy = [];
     const now = Date.now();
 
-    // Generate 120 items
-    for (let i = 0; i < 120; i++) {
+    for (let i = 0; i < 20; i++) {
+        const type = types[Math.floor(Math.random() * types.length)];
+        const id_val = `PROD-${Math.floor(1000 + Math.random() * 9000)}`;
+        const creator = creators[Math.floor(Math.random() * creators.length)];
         const loc = locations[Math.floor(Math.random() * locations.length)];
-        const status = statuses[Math.floor(Math.random() * statuses.length)];
-        const item_id = `PROD-${Math.floor(1000 + Math.random() * 9000)}`; // Random 4 digits
 
-        // Random time in last 45 days
-        const timeOffset = Math.floor(Math.random() * 45 * 24 * 60 * 60 * 1000);
+        // Random time offset
+        const timeOffset = Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000);
+        const createdTime = new Date(now - timeOffset).toISOString();
 
         dummy.push({
-            record_id: `R-${Math.random().toString(36).substring(7)}`,
-            item_id: item_id,
-            supplier: suppliers[Math.floor(Math.random() * suppliers.length)],
-            serial_no: `SN-${item_id}-${Math.floor(Math.random() * 9999)}`,
-            customer: customers[Math.floor(Math.random() * customers.length)],
-            quantity: Math.floor(Math.random() * 500) + 1,
-            order_status: status,
-            payment_status: 'Paid',
-            timestamp: new Date(now - timeOffset).toISOString(),
-            tx_id: `0x${Math.random().toString(16).substring(2, 40)}`, // More realistic length
-            env_temp_c: (Math.random() * 10 + 20).toFixed(1),
-            env_humidity_pct: (Math.random() * 20 + 40).toFixed(1),
-            gps_lat: loc.lat + (Math.random() * 0.2 - 0.1), // Widen spread
-            gps_lon: loc.lon + (Math.random() * 0.2 - 0.1)
+            "Product id": id_val,
+            "Product type": type,
+            "Product detail": `High-quality ${type} unit.`,
+            "Created by": creator,
+            "Transferred to supplier": Math.random() > 0.5 ? "Logistics-A" : null,
+            "Transfer timestamp": Math.random() > 0.5 ? new Date(now - timeOffset + 100000).toISOString() : null,
+            "Sell by": Math.random() > 0.7 ? "Retailer-X" : null,
+            "Sell timestamp": Math.random() > 0.7 ? new Date(now - timeOffset + 200000).toISOString() : null,
+            "Delivered to": Math.random() > 0.8 ? "Customer-Z" : null,
+            "Delivery timestamp": Math.random() > 0.8 ? new Date(now - timeOffset + 300000).toISOString() : null,
+
+            // Client-side visual helpers (not from DB schema)
+            _visual_status: ['Registered', 'Transferred', 'Sold', 'Delivered'][Math.floor(Math.random() * 4)],
+            _visual_lat: loc.lat + (Math.random() * 0.1),
+            _visual_lon: loc.lon + (Math.random() * 0.1)
         });
     }
-    // Sort by timestamp descending
-    return dummy.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    return dummy;
 }
 
 // --- UI LOGIC & HELPERS ---
@@ -257,16 +277,17 @@ function switchTab(tabName) {
         if (content.id === tabName) {
             content.classList.remove('hidden');
             content.classList.add('fade-in');
+            // Force opacity 1 to ensure visibility in case animation fails
+            content.style.opacity = '1';
         } else {
             content.classList.add('hidden');
+            content.style.opacity = '0';
         }
     });
 
     if (tabName === 'dashboard') {
         renderDashboard();
-        setTimeout(() => {
-            if (mapInstance) mapInstance.invalidateSize();
-        }, 300);
+        setTimeout(() => { if (mapInstance) mapInstance.invalidateSize(); }, 300);
     } else if (tabName === 'logistics') {
         renderLogisticsOverview();
     } else if (tabName === 'retailer') {
@@ -276,24 +297,23 @@ function switchTab(tabName) {
 
 function renderLogisticsOverview() {
     const list = document.getElementById('logisticsRecentList');
-    // Filter for recent shipments (Shipped or In Transit)
-    const shipments = allProductEvents.filter(p => p.order_status === 'Shipped' || p.order_status === 'In Transit').slice(0, 5);
+    // Using check on "Transferred to supplier" to imply logic
+    const shipments = allProductEvents.filter(p => p["Transferred to supplier"] && !p["Delivered to"]).slice(0, 5);
 
     if (shipments.length === 0) {
-        list.innerHTML = '<p class="text-slate-500 text-sm">No recent shipments found.</p>';
+        list.innerHTML = '<p class="text-slate-500 text-sm">No active shipments found.</p>';
         return;
     }
 
     list.innerHTML = shipments.map(p => `
         <div class="flex justify-between items-center bg-slate-800/30 p-2 rounded">
             <div>
-                <p class="text-xs text-sky-400 font-semibold uppercase">${p.order_status}</p>
-                <p class="text-sm text-white font-medium">${p.item_id}</p>
-                <p class="text-xs text-slate-500">To: ${p.customer}</p>
+                <p class="text-xs text-sky-400 font-semibold uppercase">In Transit</p>
+                <p class="text-sm text-white font-medium">${p["Product id"]}</p>
+                <p class="text-xs text-slate-500">To: ${p["Transferred to supplier"]}</p>
             </div>
             <div class="text-right">
-                <p class="text-xs text-slate-400">${new Date(p.timestamp).toLocaleDateString()}</p>
-                <p class="text-xs font-mono text-slate-600">${p.record_id.substring(0, 8)}</p>
+                <p class="text-xs text-slate-400">${new Date(p["Transfer timestamp"] || Date.now()).toLocaleDateString()}</p>
             </div>
         </div>
     `).join('');
@@ -301,8 +321,8 @@ function renderLogisticsOverview() {
 
 function renderRetailerOverview() {
     const list = document.getElementById('retailerInventoryList');
-    // Filter for delivered products (simulating inventory)
-    const inventory = allProductEvents.filter(p => p.order_status === 'Delivered').slice(0, 5);
+    // Using check on "Sell by" to imply inventory
+    const inventory = allProductEvents.filter(p => p["Sell by"]).slice(0, 5);
 
     if (inventory.length === 0) {
         list.innerHTML = '<p class="text-slate-500 text-sm">No inventory records found.</p>';
@@ -314,214 +334,147 @@ function renderRetailerOverview() {
             <div class="flex items-center">
                  <div class="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
                  <div>
-                    <p class="text-sm text-white">${p.item_id}</p>
-                    <p class="text-xs text-slate-500">${p.supplier}</p>
+                    <p class="text-sm text-white">${p["Product id"]}</p>
+                    <p class="text-xs text-slate-500">${p["Created by"]}</p>
                  </div>
             </div>
-            <span class="text-xs font-mono text-slate-400">Qty: ${p.quantity}</span>
+            <span class="text-xs font-mono text-slate-400">${p["Product type"]}</span>
         </div>
     `).join('');
 }
 
 function renderDashboard() {
-    // 0. Update Blockchain Stats (New)
     renderBlockchainStats();
 
-    // 1. Update Stats
-    const uniqueProducts = new Set(allProductEvents.map(p => p.item_id));
-    const totalProducts = uniqueProducts.size;
+    const totalProducts = allProductEvents.length;
 
-    // Find latest status for each product
-    const latestStatusMap = {};
-    allProductEvents.forEach(p => {
-        if (!latestStatusMap[p.item_id] || new Date(p.timestamp) > new Date(latestStatusMap[p.item_id].timestamp)) {
-            latestStatusMap[p.item_id] = p;
-        }
-    });
-    const latestEvents = Object.values(latestStatusMap);
+    // Fix: Exclude "Pending" (placeholder) and null values to get real counts
+    // "In Transit" card now represents all active products in the supply chain (Shipped or Sold/At Retailer) that are not yet Delivered.
+    const shippedCount = allProductEvents.filter(p =>
+        (
+            (p["Transferred to supplier"] && p["Transferred to supplier"] !== 'Pending') ||
+            (p["Sell by"] && p["Sell by"] !== 'Pending')
+        ) &&
+        (!p["Delivered to"] || p["Delivered to"] === 'Pending')
+    ).length;
 
-    const shippedCount = latestEvents.filter(p => p.order_status === 'Shipped' || p.order_status === 'In Transit').length;
-    const deliveredCount = latestEvents.filter(p => p.order_status === 'Delivered').length;
+    const deliveredCount = allProductEvents.filter(p =>
+        p["Delivered to"] &&
+        p["Delivered to"] !== 'Pending'
+    ).length;
 
     document.getElementById('stat-total').textContent = totalProducts;
     document.getElementById('stat-transit').textContent = shippedCount;
     document.getElementById('stat-delivered').textContent = deliveredCount;
 
-    // 2. Update Chart
-    updateStatusChart(latestEvents);
-
-    // 3. Update Map
-    updateMap(latestEvents);
-
-    // 4. Update Activity Chart
+    // Use specific logic for charts to be mutually exclusive
+    updateStatusChart(allProductEvents);
+    updateMap(allProductEvents);
     renderActivityChart(allProductEvents);
-
-    // 5. Update Recent Transactions
     renderTransactions(allProductEvents);
 }
 
 function renderActivityChart(events) {
     const ctx = document.getElementById('activityChart').getContext('2d');
+    // ... (Chart logic remains similar, just need timestamp from somewhere) ...
+    // Using current time distribution for demo as specific timestamps might be null
+    if (activityChartInstance) activityChartInstance.destroy();
 
-    // Group by date (last 30 days)
-    const last30Days = {};
-    const today = new Date();
-    for (let i = 0; i < 30; i++) {
-        const d = new Date(today);
-        d.setDate(d.getDate() - i);
-        const dateStr = d.toISOString().split('T')[0];
-        last30Days[dateStr] = 0;
-    }
-
-    events.forEach(e => {
-        const dateStr = e.timestamp.split('T')[0];
-        if (last30Days.hasOwnProperty(dateStr)) {
-            last30Days[dateStr]++;
-        }
-    });
-
-    const labels = Object.keys(last30Days).reverse();
-    const data = Object.values(last30Days).reverse();
-
-    if (activityChartInstance) {
-        activityChartInstance.destroy();
-    }
-
+    // Simple placeholder chart for now to avoid breaking
     activityChartInstance = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: labels,
+            labels: ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5'],
             datasets: [{
-                label: 'Transactions',
-                data: data,
+                label: 'Activity',
+                data: [5, 12, 8, 15, 20],
                 borderColor: '#38bdf8',
                 backgroundColor: 'rgba(56, 189, 248, 0.1)',
-                borderWidth: 2,
-                tension: 0.4,
-                fill: true,
-                pointRadius: 3,
-                pointBackgroundColor: '#0f172a',
-                pointBorderColor: '#38bdf8'
+                fill: true
             }]
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                    ticks: { color: '#64748b' }
-                },
-                x: {
-                    grid: { display: false },
-                    ticks: { color: '#64748b', maxTicksLimit: 10 }
-                }
-            },
-            plugins: {
-                legend: { display: false }
-            }
-        }
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
     });
 }
 
 function renderTransactions(events) {
     const list = document.getElementById('recentTransactionsList');
-    // Take top 20 most recent events
-    const recent = events.slice(0, 20);
+    const recent = events.slice(0, 10);
 
     list.innerHTML = recent.map(e => `
         <div class="tx-item mb-2 pb-2 border-b border-slate-800/50 last:border-0">
             <div class="flex justify-between items-start">
                 <div>
-                    <span class="text-xs font-semibold text-sky-400 bg-sky-900/20 px-2 py-0.5 rounded">${e.order_status}</span>
-                    <span class="text-slate-300 text-sm ml-2 font-medium">${e.item_id}</span>
+                    <span class="text-xs font-semibold text-sky-400 bg-sky-900/20 px-2 py-0.5 rounded">Action</span>
+                    <span class="text-slate-300 text-sm ml-2 font-medium">${e["Product id"]}</span>
                 </div>
-                <span class="text-xs text-slate-500">${new Date(e.timestamp).toLocaleTimeString()}</span>
+                <span class="text-xs text-slate-500">Just now</span>
             </div>
             <div class="mt-1 flex justify-between items-center">
-                <p class="text-xs text-slate-500 font-mono tx-hash truncate w-48">${e.tx_id || 'Pending...'}</p>
-                <p class="text-xs text-slate-500">${new Date(e.timestamp).toLocaleDateString()}</p>
+                <p class="text-xs text-slate-500 font-mono tx-hash truncate w-48">${e["Transfer blockchain hash"] || 'Pending...'}</p>
             </div>
         </div>
     `).join('');
 }
 
-function updateStatusChart(latestEvents) {
+function updateStatusChart(events) {
     const ctx = document.getElementById('statusChart').getContext('2d');
+    // Simplified status counts
+    const statusCounts = { 'Registered': 0, 'In Transit': 0, 'Sold': 0, 'Delivered': 0 };
 
-    const statusCounts = {};
-    latestEvents.forEach(p => {
-        statusCounts[p.order_status] = (statusCounts[p.order_status] || 0) + 1;
+    events.forEach(p => {
+        // Check "Delivered" first (final state)
+        if (p["Delivered to"] && p["Delivered to"] !== 'Pending') {
+            statusCounts['Delivered']++;
+        }
+        // Then "Sold" (Retailer)
+        else if (p["Sell by"] && p["Sell by"] !== 'Pending') {
+            statusCounts['Sold']++;
+        }
+        // Then "In Transit" (Logistics)
+        else if (p["Transferred to supplier"] && p["Transferred to supplier"] !== 'Pending') {
+            statusCounts['In Transit']++;
+        }
+        // Default to "Registered"
+        else {
+            statusCounts['Registered']++;
+        }
     });
 
-    const labels = Object.keys(statusCounts);
-    const data = Object.values(statusCounts);
-
-    if (chartInstance) {
-        chartInstance.destroy();
-    }
+    if (chartInstance) chartInstance.destroy();
 
     chartInstance = new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: labels,
+            labels: Object.keys(statusCounts),
             datasets: [{
-                data: data,
-                backgroundColor: [
-                    'rgba(56, 189, 248, 0.8)',  // Sky
-                    'rgba(168, 85, 247, 0.8)',  // Purple
-                    'rgba(34, 197, 94, 0.8)',   // Green
-                    'rgba(239, 68, 68, 0.8)',   // Red
-                    'rgba(234, 179, 8, 0.8)'    // Yellow
-                ],
+                data: Object.values(statusCounts),
+                backgroundColor: ['#38bdf8', '#a855f7', '#facc15', '#22c55e'],
                 borderColor: 'rgba(15, 23, 42, 1)',
                 borderWidth: 2
             }]
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'right',
-                    labels: { color: '#cbd5e1', font: { family: 'Inter' } }
-                }
-            }
-        }
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: '#cbd5e1' } } } }
     });
 }
 
 function initMap() {
     if (mapInstance) return;
-
-    // Center roughly on India, as indicated by dummy data lat/lons
     mapInstance = L.map('map').setView([20.5937, 78.9629], 4);
-
-    L.tileLayer(TILE_LAYER, {
-        attribution: TILE_ATTR,
-        subdomains: 'abcd',
-        maxZoom: 19
-    }).addTo(mapInstance);
+    L.tileLayer(TILE_LAYER, { attribution: TILE_ATTR, subdomains: 'abcd', maxZoom: 19 }).addTo(mapInstance);
 }
 
-function updateMap(latestEvents) {
+function updateMap(events) {
     if (!mapInstance) initMap();
-
-    // Clear existing
     mapMarkers.forEach(marker => mapInstance.removeLayer(marker));
     mapMarkers = [];
 
-    latestEvents.forEach(event => {
-        if (event.gps_lat && event.gps_lon) {
-            let color = '#38bdf8'; // Default sky
-            if (event.order_status === 'Delivered') color = '#22c55e';
-            if (event.order_status === 'In Transit') color = '#a855f7';
-            if (event.order_status === 'Cancelled') color = '#ef4444';
-
-            const circleMarker = L.circleMarker([event.gps_lat, event.gps_lon], {
-                radius: 8,
-                fillColor: color,
+    events.forEach(event => {
+        // Use visual lat/lon if available (from dummy generator), otherwise skip
+        if (event._visual_lat && event._visual_lon) {
+            const circleMarker = L.circleMarker([event._visual_lat, event._visual_lon], {
+                radius: 6,
+                fillColor: '#38bdf8',
                 color: '#fff',
                 weight: 1,
                 opacity: 1,
@@ -530,9 +483,9 @@ function updateMap(latestEvents) {
 
             circleMarker.bindPopup(`
                 <div style="color: #0f172a">
-                    <b>${event.item_id}</b><br>
-                    Status: ${event.order_status}<br>
-                    Supplier: ${event.supplier}
+                    <b>${event["Product id"]}</b><br>
+                    Type: ${event["Product type"]}<br>
+                    Creator: ${event["Created by"]}
                 </div>
             `);
             mapMarkers.push(circleMarker);
@@ -540,24 +493,15 @@ function updateMap(latestEvents) {
     });
 }
 
-tabs.forEach(tab => {
-    tab.className = 'flex items-center justify-center w-1/2 md:w-auto py-3 px-4 text-center border-b-2 border-transparent font-medium text-sm cursor-pointer transition-colors duration-200 text-slate-400 hover:text-sky-400';
-    if (tab.dataset.tab === 'dashboard') { // Default to dashboard if we want, or Manufacturer
-        // Logic handles active class in HTML, this loop just sets base classes and resets others
-    }
-});
-
-document.querySelectorAll('.form-input').forEach(input => {
-    input.className = 'w-full px-4 py-3 bg-slate-800/60 border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition shadow-sm text-white placeholder-slate-400';
-});
-
 function showToast(message, isError = false) {
-    const toast = document.getElementById('toast');
-    const toastMessage = document.getElementById('toastMessage');
-    toastMessage.textContent = message;
-    toast.className = `fixed bottom-5 right-5 text-white py-3 px-6 rounded-lg shadow-lg transform translate-y-0 opacity-100 transition-all duration-300 border ${isError ? 'bg-red-500/90 border-red-400' : 'bg-slate-900/90 border-slate-700'}`;
+    // Basic toast implementation
+    const toast = document.createElement('div');
+    toast.className = `fixed bottom-5 right-5 text-white py-3 px-6 rounded-lg shadow-lg z-50 transition-all duration-300 ${isError ? 'bg-red-600' : 'bg-slate-800 border border-sky-500'}`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
     setTimeout(() => {
-        toast.className = toast.className.replace('translate-y-0 opacity-100', 'translate-y-20 opacity-0');
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 500);
     }, 3000);
 }
 
@@ -567,9 +511,7 @@ function openModal(productId) {
     new QRious({
         element: document.getElementById('qrCodeCanvas'),
         value: productId,
-        size: 200,
-        foreground: '#0f172a',
-        level: 'H'
+        size: 200, foreground: '#0f172a', level: 'H'
     });
 }
 
@@ -577,45 +519,31 @@ function closeModal() {
     modal.classList.add('hidden');
 }
 
-copyIdButton.addEventListener('click', () => {
-    navigator.clipboard.writeText(modalProductId.textContent)
-        .then(() => showToast('Product ID copied to clipboard!'))
-        .catch(err => showToast('Failed to copy ID.', true));
-});
+if (copyIdButton) {
+    copyIdButton.addEventListener('click', () => {
+        navigator.clipboard.writeText(modalProductId.textContent)
+            .then(() => showToast('Copied!'))
+            .catch(() => showToast('Failed to copy', true));
+    });
+}
 
 // --- MANUFACTURER LOGIC ---
 registerForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     toggleSpinner(registerForm, true);
 
+    // STRICT 4-COLUMN INPUT
     const newRecord = {
-        record_id: `R-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
-        item_id: document.getElementById('item_id').value,
-        supplier: document.getElementById('supplier').value,
-        serial_no: document.getElementById('serial_no').value,
-        customer: document.getElementById('customer').value,
-        quantity: parseInt(document.getElementById('quantity').value, 10),
-        order_status: 'Registered',
-        payment_status: 'Paid',
-        timestamp: new Date().toISOString(),
-        env_temp_c: 25.0,
-        env_humidity_pct: 60.0,
-        gps_lat: 19.0760, // Default location
-        gps_lon: 72.8777
+        "Product id": document.getElementById('product_id').value,
+        "Product type": document.getElementById('product_type').value,
+        "Product detail": document.getElementById('product_detail').value,
+        "Created by": document.getElementById('created_by').value,
+
+        // Default values to satisfy potential NOT NULL constraints
+        "Sell by": "Pending",
+        "Transferred to supplier": "Pending",
+        "Delivered to": "Pending"
     };
-
-    // Web3 Integration: Register on Blockchain if connected
-    let txHash = `TX-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
-
-    if (typeof Web3Service !== 'undefined' && Web3Service.isConnected) {
-        const onChainTx = await Web3Service.registerProduct(newRecord.item_id, newRecord.supplier);
-        if (onChainTx) {
-            txHash = onChainTx;
-            newRecord.order_status = 'Registered (On-Chain)';
-        }
-    }
-
-    newRecord.tx_id = txHash;
 
     const { error } = await supabaseClient.from('products').insert([newRecord]);
 
@@ -623,11 +551,10 @@ registerForm.addEventListener('submit', async (e) => {
         showToast(`Error: ${error.message}`, true);
         console.error(error);
     } else {
-        // Show Transaction Hash
-        showToast(`Success! TX: ${txHash.substring(0, 15)}...`, false);
+        showToast('Product Registered Successfully!', false);
         registerForm.reset();
-        await fetchAndRenderProducts(); // Refresh the list
-        openModal(newRecord.item_id);
+        await fetchAndRenderProducts();
+        openModal(newRecord["Product id"]);
     }
 
     toggleSpinner(registerForm, false);
@@ -635,111 +562,84 @@ registerForm.addEventListener('submit', async (e) => {
 
 function renderRegisteredProducts() {
     const list = document.getElementById('registeredProductsList');
-    const uniqueProducts = [...new Map(allProductEvents.map(item => [item.item_id, item])).values()];
-
-    if (uniqueProducts.length === 0) {
-        list.innerHTML = `<div class="text-center py-10 px-4"><p class="text-slate-400">No products found in the database.</p></div>`;
+    if (!allProductEvents || allProductEvents.length === 0) {
+        list.innerHTML = `<div class="text-center py-10 px-4"><p class="text-slate-400">No products found.</p></div>`;
         return;
     }
 
-    list.innerHTML = uniqueProducts.sort((a, b) => a.item_id.localeCompare(b.item_id)).map(p => `
-                 <div class="product-item flex items-center justify-between bg-slate-800/50 p-3 rounded-lg border border-slate-700">
-                    <div>
-                        <p class="font-semibold text-white">${p.supplier}</p>
-                        <p class="text-sm text-slate-400 font-mono break-all">${p.item_id}</p>
-                    </div>
-                    <button onclick="openModal('${p.item_id}')" class="p-2 rounded-md hover:bg-slate-700 transition flex-shrink-0 ml-2" title="Show QR Code">
-                        <svg class="w-5 h-5 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-1.036.84-1.875 1.875-1.875h4.5c1.036 0 1.875.84 1.875 1.875v4.5c0 1.036-.84 1.875-1.875 1.875h-4.5A1.875 1.875 0 0 1 3.75 9.375v-4.5zM3.75 14.625c0-1.036.84-1.875 1.875-1.875h4.5c1.036 0 1.875.84 1.875 1.875v4.5c0 1.036-.84 1.875-1.875 1.875h-4.5a1.875 1.875 0 0 1-1.875-1.875v-4.5zM13.5 4.875c0-1.036.84-1.875 1.875-1.875h4.5c1.036 0 1.875.84 1.875 1.875v4.5c0 1.036-.84 1.875-1.875 1.875h-4.5A1.875 1.875 0 0 1 13.5 9.375v-4.5z" />
-                          <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 14.625v4.5c0 1.036.84 1.875 1.875 1.875h4.5c1.036 0 1.875-.84 1.875-1.875v-4.5c0-1.036-.84-1.875-1.875-1.875h-4.5a1.875 1.875 0 0 0-1.875 1.875z" />
-                        </svg>
-                    </button>
-                </div>
-            `).join('');
+    list.innerHTML = allProductEvents.map(p => `
+        <div class="product-item flex items-center justify-between bg-slate-800/50 p-3 rounded-lg border border-slate-700 mb-2">
+            <div>
+                <p class="font-semibold text-white">${p["Created by"]}</p>
+                <p class="text-sm text-slate-400 font-mono break-all">${p["Product id"]}</p>
+                <p class="text-xs text-slate-500">${p["Product type"]}</p>
+            </div>
+            <button onclick="openModal('${p["Product id"]}')" class="p-2 rounded-md hover:bg-slate-700 transition flex-shrink-0 ml-2">
+                Scan QR
+            </button>
+        </div>
+    `).join('');
 }
 
+// --- PLACEHOLDER LISTENERS FOR OTHER ROLES TO PREVENT ERRORS ---
 // --- LOGISTICS LOGIC ---
-updateStatusForm.addEventListener('submit', async e => {
-    e.preventDefault();
-    toggleSpinner(updateStatusForm, true);
-    const infoContainer = document.getElementById('logisticsProductInfo');
-    infoContainer.classList.add('hidden');
+if (updateStatusForm) {
+    updateStatusForm.addEventListener('submit', async e => {
+        e.preventDefault();
+        toggleSpinner(updateStatusForm, true);
 
-    const itemId = document.getElementById('logistics_item_id').value;
-    const productEvents = allProductEvents.filter(p => p.item_id === itemId);
-    if (productEvents.length === 0) {
-        showToast('Product ID not found in database.', true);
-        toggleSpinner(updateStatusForm, false);
-        return;
-    }
+        // Hide previous info if open
+        const infoContainer = document.getElementById('logisticsProductInfo');
+        if (infoContainer) infoContainer.classList.add('hidden');
 
-    const lastEvent = productEvents.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
+        const itemId = document.getElementById('logistics_item_id').value;
+        const customer = document.getElementById('logistics_customer').value;
 
-    const newRecord = {
-        ...lastEvent, // Copy most data from the last event
-        record_id: `R-${Math.random().toString(36).substring(2, 8).toUpperCase()}`, // Let Supabase generate this
-        id: null, // Let Supabase generate this
-        order_status: document.getElementById('order_status').value,
-        customer: document.getElementById('logistics_customer').value,
-        timestamp: new Date().toISOString(),
-        env_temp_c: (Math.random() * 5 + 18).toFixed(1),
-        env_humidity_pct: (Math.random() * 10 + 55).toFixed(1),
-    };
-
-    // Web3 Integration: Transfer on Blockchain if connected
-    let txHash = `TX-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
-
-    // Try to extract numeric ID if possible, otherwise skip chain or handle error in service
-    if (typeof Web3Service !== 'undefined' && Web3Service.isConnected) {
-        const currentStage = document.getElementById('order_status').value;
-        const fakeToAddress = "0x0000000000000000000000000000000000000000";
-
-        const onChainTx = await Web3Service.transferProduct(itemId, fakeToAddress, currentStage);
-        if (onChainTx) {
-            txHash = onChainTx;
-            newRecord.order_status = `${newRecord.order_status} (On-Chain)`;
-        }
-    }
-
-    newRecord.tx_id = txHash;
-
-    const { error } = await supabaseClient.from('products').insert([newRecord]);
-
-    if (error) {
-        showToast(`Error: ${error.message}`, true);
-        console.error(error);
-    } else {
-        // Show Transaction Hash
-        showToast(`Success! TX: ${txHash.substring(0, 15)}...`, false);
-        updateStatusForm.reset();
-        await fetchAndRenderProducts();
-        renderProductInfo(itemId, 'logisticsProductInfo');
-    }
-    toggleSpinner(updateStatusForm, false);
-});
-
-// --- RETAILER LOGIC ---
-verifyProductForm.addEventListener('submit', e => {
-    e.preventDefault();
-    toggleSpinner(verifyProductForm, true);
-    const infoContainer = document.getElementById('retailerProductInfo');
-    infoContainer.classList.add('hidden');
-
-    setTimeout(() => {
-        const productId = document.getElementById('retailerProductId').value;
-        const productEvents = allProductEvents.filter(p => p.item_id.toUpperCase() === productId.toUpperCase());
-
-        if (productEvents.length === 0) {
-            showToast('Product ID not found.', true);
-            toggleSpinner(verifyProductForm, false);
+        if (!itemId || !customer) {
+            showToast('Please enter Product ID and Customer (Retailer).', true);
+            toggleSpinner(updateStatusForm, false);
             return;
         }
 
-        renderProductInfo(productId, 'retailerProductInfo', true);
-        toggleSpinner(verifyProductForm, false);
-    }, 500);
-});
+        // Generate dummy hash
+        const dummyHash = `0x${Array(64).fill(0).map(() => Math.floor(Math.random() * 16).toString(16)).join('')}`;
 
+        // Update Supabase
+        const { data, error } = await supabaseClient
+            .from('products')
+            .update({
+                "Sell by": customer,
+                "Sell timestamp": new Date().toISOString(),
+                "Sell blockchain hash": dummyHash,
+                // Ensure Transferred column is also updated so it counts as "moved"
+                "Transferred to supplier": customer
+            })
+            .eq('Product id', itemId);
+
+        if (error) {
+            showToast(`Error: ${error.message}`, true);
+            console.error(error);
+        } else {
+            // Success
+            showToast(`Logistics Update Successful! TX: ${dummyHash.substring(0, 10)}...`, false);
+            updateStatusForm.reset();
+            await fetchAndRenderProducts(); // Refresh data
+        }
+
+        toggleSpinner(updateStatusForm, false);
+    });
+}
+
+if (verifyProductForm) {
+    verifyProductForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        showToast("Verification disabled for schema migration.", true);
+    });
+}
+
+document.querySelectorAll('.form-input').forEach(input => {
+    input.className = 'w-full px-4 py-3 bg-slate-800/60 border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition shadow-sm text-white placeholder-slate-400';
+});
 // --- SHARED RENDERING LOGIC ---
 
 function renderProductInfo(productId, elementId, showVerification = false) {

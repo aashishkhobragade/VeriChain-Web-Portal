@@ -6,7 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VeriChain | Supply Chain dApp</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Fonts: Inter & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+
     <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.5/ethers.umd.min.js"></script>
@@ -18,13 +24,19 @@
     <link rel="stylesheet" href="css/styles.css">
 </head>
 
-<body class="bg-slate-900 text-slate-300">
+<body class="bg-slate-900 text-slate-300 antialiased selection:bg-sky-500 selection:text-white">
 
-    <div id="app" class="max-w-7xl mx-auto p-4 md:p-8">
+    <div id="app" class="max-w-7xl mx-auto p-4 md:p-8 relative z-10">
 
-        <header class="mb-10 text-center">
-            <h1 class="text-4xl md:text-5xl font-extrabold text-white tracking-tight flex items-center justify-center">
-                <svg class="w-10 h-10 mr-4 text-sky-400 logo-anim" xmlns="http://www.w3.org/2000/svg" fill="none"
+        <header class="mb-12 text-center relative">
+            <!-- Header Glow Effect -->
+            <div
+                class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-32 bg-sky-500/20 blur-[100px] -z-10 rounded-full pointer-events-none">
+            </div>
+
+            <h1
+                class="text-5xl md:text-6xl font-extrabold text-white tracking-tight flex items-center justify-center text-glow mb-4">
+                <svg class="w-12 h-12 mr-5 text-sky-400 logo-anim" xmlns="http://www.w3.org/2000/svg" fill="none"
                     viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round"
                         d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
@@ -32,11 +44,16 @@
                 </svg>
                 VeriChain
             </h1>
-            <p class="text-slate-400 mt-2 text-lg">A decentralized solution for product provenance and authenticity.</p>
+            <p class="text-slate-400 mt-2 text-lg max-w-2xl mx-auto">A decentralized solution for product provenance and
+                authenticity, secured by Ethereum.</p>
+
             <div id="wallet-badge" onclick="Web3Service.connectWallet()"
-                class="absolute top-4 right-4 hidden md:flex items-center space-x-2 bg-slate-800/80 px-4 py-2 rounded-full border border-slate-700 cursor-pointer hover:bg-slate-700 transition">
-                <div class="w-2 h-2 bg-slate-500 rounded-full"></div>
-                <span class="text-xs text-slate-300 font-mono">Connect Wallet</span>
+                class="absolute top-0 right-0 hidden md:flex items-center space-x-2 bg-slate-800/80 px-4 py-2 rounded-full border border-slate-700/50 cursor-pointer hover:bg-slate-700/80 transition backdrop-blur-md group hover:border-sky-500/30">
+                <div
+                    class="w-2 h-2 bg-slate-500 rounded-full group-hover:bg-sky-400 transition-colors shadow-[0_0_8px_rgba(14,165,233,0)] group-hover:shadow-[0_0_8px_rgba(14,165,233,0.6)]">
+                </div>
+                <span class="text-xs text-slate-300 font-mono group-hover:text-white transition-colors">Connect
+                    Wallet</span>
             </div>
         </header>
 
@@ -174,18 +191,25 @@
                     <div class="card p-6">
                         <h2 class="text-2xl font-semibold mb-4 text-white">Register New Product Event</h2>
                         <form id="registerProductForm" class="space-y-4">
-                            <input type="text" id="item_id" placeholder="Product ID (e.g., PROD-A100)"
+                            <!-- 1. Product ID -->
+                            <input type="text" id="product_id" placeholder="Product ID (e.g., PROD-A100)"
                                 class="form-input" required>
-                            <input type="text" id="supplier" placeholder="Supplier Name (e.g., EpsilonCo)"
+
+                            <!-- 2. Product Type -->
+                            <input type="text" id="product_type" placeholder="Product Type (e.g., Electronics)"
                                 class="form-input" required>
-                            <input type="text" id="serial_no" placeholder="Serial Number (e.g., SN-A100-1234)"
+
+                            <!-- 3. Product Detail -->
+                            <input type="text" id="product_detail" placeholder="Product Detail (e.g., High-end GPU)"
                                 class="form-input" required>
-                            <input type="text" id="customer" placeholder="Customer (e.g., DistributorX)"
+
+                            <!-- 4. Created By -->
+                            <input type="text" id="created_by" placeholder="Created By (e.g., ManufacturerX)"
                                 class="form-input" required>
-                            <input type="number" id="quantity" placeholder="Quantity" class="form-input" required>
+
                             <button type="submit"
                                 class="submit-button w-full text-white py-3 rounded-lg font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 focus:ring-offset-slate-900 flex items-center justify-center">
-                                <span class="button-text">Register Event</span>
+                                <span class="button-text">Register Product</span>
                                 <div class="spinner hidden ml-2"></div>
                             </button>
                         </form>
@@ -226,84 +250,100 @@
                             </button>
                         </form>
                     </div>
-                    <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div class="card p-6">
-                            <h3 class="text-xl font-semibold text-white mb-4">Fleet Status</h3>
-                            <div class="grid grid-cols-2 gap-4 text-center">
-                                <div class="bg-slate-800/50 p-4 rounded-lg">
-                                    <p class="text-slate-400 text-sm">Active Trucks</p>
-                                    <p class="text-2xl font-bold text-sky-400">24</p>
-                                </div>
-                                <div class="bg-slate-800/50 p-4 rounded-lg">
-                                    <p class="text-slate-400 text-sm">Avg Delivery</p>
-                                    <p class="text-2xl font-bold text-green-400">2.3 Days</p>
-                                </div>
-                                <div class="bg-slate-800/50 p-4 rounded-lg">
-                                    <p class="text-slate-400 text-sm">Pending Dispatches</p>
-                                    <p class="text-2xl font-bold text-yellow-400">7</p>
-                                </div>
-                                <div class="bg-slate-800/50 p-4 rounded-lg">
-                                    <p class="text-slate-400 text-sm">Route Issues</p>
-                                    <p class="text-2xl font-bold text-red-400">1</p>
-                                </div>
+                </div>
+                <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="card p-6">
+                        <h3 class="text-xl font-semibold text-white mb-4">Fleet Status</h3>
+                        <div class="grid grid-cols-2 gap-4 text-center">
+                            <div class="bg-slate-800/50 p-4 rounded-lg">
+                                <p class="text-slate-400 text-sm">Active Trucks</p>
+                                <p class="text-2xl font-bold text-sky-400">24</p>
                             </div>
-                        </div>
-                        <div class="card p-6">
-                            <h3 class="text-xl font-semibold text-white mb-4">Recent Shipments</h3>
-                            <div id="logisticsRecentList" class="space-y-3 max-h-48 overflow-y-auto pr-2">
-                                <!-- Injected by JS -->
-                                <p class="text-slate-500 text-sm italic">Loading fleet data...</p>
+                            <div class="bg-slate-800/50 p-4 rounded-lg">
+                                <p class="text-slate-400 text-sm">Avg Delivery</p>
+                                <p class="text-2xl font-bold text-green-400">2.3 Days</p>
+                            </div>
+                            <div class="bg-slate-800/50 p-4 rounded-lg">
+                                <p class="text-slate-400 text-sm">Pending Dispatches</p>
+                                <p class="text-2xl font-bold text-yellow-400">7</p>
+                            </div>
+                            <div class="bg-slate-800/50 p-4 rounded-lg">
+                                <p class="text-slate-400 text-sm">Route Issues</p>
+                                <p class="text-2xl font-bold text-red-400">1</p>
                             </div>
                         </div>
                     </div>
-                </div>
-
-                <!-- Retailer Interface -->
-                <div id="retailer" class="tab-content hidden">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div class="card p-6">
-                            <h2 class="text-2xl font-semibold mb-4 text-white">Verify Product Authenticity</h2>
-                            <form id="verifyProductForm" class="space-y-4">
-                                <input type="text" id="retailerProductId" placeholder="Scan or Enter Product ID"
-                                    class="form-input" required>
-                                <button type="submit"
-                                    class="submit-button w-full text-white py-3 rounded-lg font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 focus:ring-offset-slate-900 flex items-center justify-center">
-                                    <span class="button-text">Verify & View History</span>
-                                    <div class="spinner hidden ml-2"></div>
-                                </button>
-                            </form>
+                    <div class="card p-6">
+                        <h3 class="text-xl font-semibold text-white mb-4">Recent Shipments</h3>
+                        <div id="logisticsRecentList" class="space-y-3 max-h-48 overflow-y-auto pr-2">
+                            <!-- Injected by JS -->
+                            <p class="text-slate-500 text-sm italic">Loading fleet data...</p>
                         </div>
-                        <div id="retailerProductInfo" class="card p-6 hidden">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Retailer Interface -->
+            <div id="retailer" class="tab-content hidden">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="card p-6">
+                        <h2 class="text-2xl font-semibold mb-4 text-white">Record Sale to Consumer</h2>
+                        <form id="recordDeliveryForm" class="space-y-4">
+                            <input type="text" id="delivery_product_id" placeholder="Product ID (e.g., PROD-ABC-012)"
+                                class="form-input" required>
+                            <input type="text" id="consumer_name" placeholder="Consumer Name (e.g., John Doe)"
+                                class="form-input" required>
+                            <button type="submit"
+                                class="submit-button w-full text-white py-3 rounded-lg font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 focus:ring-offset-slate-900 flex items-center justify-center">
+                                <span class="button-text">Mark Delivered to Consumer</span>
+                                <div class="spinner hidden ml-2"></div>
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="card p-6">
+                        <h2 class="text-2xl font-semibold mb-4 text-white">Verify Product Authenticity</h2>
+                        <form id="verifyProductForm" class="space-y-4">
+                            <input type="text" id="retailerProductId" placeholder="Scan or Enter Product ID"
+                                class="form-input" required>
+                            <button type="submit"
+                                class="submit-button w-full text-white py-3 rounded-lg font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 focus:ring-offset-slate-900 flex items-center justify-center">
+                                <span class="button-text">Verify & View History</span>
+                                <div class="spinner hidden ml-2"></div>
+                            </button>
+                        </form>
+                        <div id="retailerProductInfo" class="mt-4 hidden">
                             <!-- Verification result and history will appear here -->
                         </div>
                     </div>
-                    <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-8">
-                        <div class="card p-6 col-span-1">
-                            <h3 class="text-xl font-semibold text-white mb-4">Sustainability Score</h3>
-                            <div class="flex flex-col items-center justify-center h-40">
-                                <div class="relative w-32 h-32">
-                                    <svg class="w-full h-full transform -rotate-90">
-                                        <circle cx="64" cy="64" r="56" stroke="rgba(255,255,255,0.1)" stroke-width="8"
-                                            fill="none"></circle>
-                                        <circle cx="64" cy="64" r="56" stroke="#22c55e" stroke-width="8" fill="none"
-                                            stroke-dasharray="351.86" stroke-dashoffset="35.18"></circle>
-                                    </svg>
-                                    <div class="absolute inset-0 flex items-center justify-center flex-col">
-                                        <span class="text-3xl font-bold text-white">92%</span>
-                                        <span class="text-xs text-green-400">Eco-Friendly</span>
-                                    </div>
+                </div>
+                <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="card p-6 col-span-1">
+                        <h3 class="text-xl font-semibold text-white mb-4">Sustainability Score</h3>
+                        <div class="flex flex-col items-center justify-center h-40">
+                            <div class="relative w-32 h-32">
+                                <svg class="w-full h-full transform -rotate-90">
+                                    <circle cx="64" cy="64" r="56" stroke="rgba(255,255,255,0.1)" stroke-width="8"
+                                        fill="none"></circle>
+                                    <circle cx="64" cy="64" r="56" stroke="#22c55e" stroke-width="8" fill="none"
+                                        stroke-dasharray="351.86" stroke-dashoffset="35.18"></circle>
+                                </svg>
+                                <div class="absolute inset-0 flex items-center justify-center flex-col">
+                                    <span class="text-3xl font-bold text-white">92%</span>
+                                    <span class="text-xs text-green-400">Eco-Friendly</span>
                                 </div>
                             </div>
                         </div>
-                        <div class="card p-6 col-span-1 md:col-span-2">
-                            <h3 class="text-xl font-semibold text-white mb-4">Store Inventory</h3>
-                            <div id="retailerInventoryList" class="space-y-2 max-h-48 overflow-y-auto pr-2">
-                                <!-- Injected by JS -->
-                                <p class="text-slate-500 text-sm italic">Syncing inventory...</p>
-                            </div>
+                    </div>
+                    <div class="card p-6 col-span-1 md:col-span-2">
+                        <h3 class="text-xl font-semibold text-white mb-4">Store Inventory</h3>
+                        <div id="retailerInventoryList" class="space-y-2 max-h-48 overflow-y-auto pr-2">
+                            <!-- Injected by JS -->
+                            <p class="text-slate-500 text-sm italic">Syncing inventory...</p>
                         </div>
                     </div>
                 </div>
+            </div>
         </main>
     </div>
 
