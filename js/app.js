@@ -449,12 +449,34 @@ function updateStatusChart(events) {
             labels: Object.keys(statusCounts),
             datasets: [{
                 data: Object.values(statusCounts),
-                backgroundColor: ['#38bdf8', '#a855f7', '#facc15', '#22c55e'],
-                borderColor: 'rgba(15, 23, 42, 1)',
-                borderWidth: 2
+                backgroundColor: [
+                    '#475569', // Registered: Slate-600 (Neutral/Start)
+                    '#38bdf8', // In Transit: Sky-400 (Active/Moving)
+                    '#818cf8', // Sold: Indigo-400 (Handover/Retail)
+                    '#34d399'  // Delivered: Emerald-400 (Success/End)
+                ],
+                borderColor: 'transparent',
+                borderWidth: 0,
+                borderRadius: 4,
+                hoverOffset: 4
             }]
         },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: '#cbd5e1' } } } }
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '75%', // Thinner ring for minimalist look
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        color: '#94a3b8', // Slate-400 text
+                        font: { family: "'Inter', sans-serif", size: 11 },
+                        usePointStyle: true,
+                        boxWidth: 8
+                    }
+                }
+            }
+        }
     });
 }
 
