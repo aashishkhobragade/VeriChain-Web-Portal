@@ -401,8 +401,9 @@ function renderTransactions(events) {
     const list = document.getElementById('recentTransactionsList');
     const recent = events.slice(0, 10);
 
-    list.innerHTML = recent.map(e => `
-        <div class="tx-item mb-2 pb-2 border-b border-slate-800/50 last:border-0">
+    list.innerHTML = recent.map((e, index) => `
+        <div class="tx-item mb-2 pb-2 border-b border-slate-800/50 last:border-0" 
+             style="animation-delay: ${index * 100}ms">
             <div class="flex justify-between items-start">
                 <div>
                     <span class="text-xs font-semibold text-sky-400 bg-sky-900/20 px-2 py-0.5 rounded">Action</span>
@@ -411,7 +412,9 @@ function renderTransactions(events) {
                 <span class="text-xs text-slate-500">Just now</span>
             </div>
             <div class="mt-1 flex justify-between items-center">
-                <p class="text-xs text-slate-500 font-mono tx-hash truncate w-48">${e["Transfer blockchain hash"] || 'Pending...'}</p>
+                <p class="text-xs text-slate-500 font-mono tx-hash truncate w-48 transition-colors hover:text-sky-400 cursor-pointer">
+                    ${e["Transfer blockchain hash"] || e["Delivery blockchain hash"] || e["Sell blockchain hash"] || 'Pending...'}
+                </p>
             </div>
         </div>
     `).join('');
@@ -423,19 +426,21 @@ function updateStatusChart(events) {
     const statusCounts = { 'Registered': 0, 'In Transit': 0, 'Sold': 0, 'Delivered': 0 };
 
     events.forEach(p => {
-        // Check "Delivered" first (final state)
+        // 1. Delivered (Final State)
         if (p["Delivered to"] && p["Delivered to"] !== 'Pending') {
             statusCounts['Delivered']++;
         }
-        // Then "Sold" (Retailer)
-        else if (p["Sell by"] && p["Sell by"] !== 'Pending') {
-            statusCounts['Sold']++;
-        }
-        // Then "In Transit" (Logistics)
+        // 2. In Transit (Logistics / Shipped)
+        // Fix: logic now correctly prioritizes "In Transit" over "Sold"
         else if (p["Transferred to supplier"] && p["Transferred to supplier"] !== 'Pending') {
             statusCounts['In Transit']++;
         }
-        // Default to "Registered"
+        // 3. Sold (Retailer Inventory / Not yet Delivered or Shipped?)
+        // Falling back to "Sold" only if strictly "Sell by" is set without "Transfer".
+        else if (p["Sell by"] && p["Sell by"] !== 'Pending') {
+            statusCounts['Sold']++;
+        }
+        // 4. Registered (Initial State)
         else {
             statusCounts['Registered']++;
         }
@@ -450,30 +455,50 @@ function updateStatusChart(events) {
             datasets: [{
                 data: Object.values(statusCounts),
                 backgroundColor: [
-                    '#475569', // Registered: Slate-600 (Neutral/Start)
-                    '#38bdf8', // In Transit: Sky-400 (Active/Moving)
-                    '#818cf8', // Sold: Indigo-400 (Handover/Retail)
-                    '#34d399'  // Delivered: Emerald-400 (Success/End)
+                    '#38bdf8', // In Transit (Sky Blue)
+                    '#5eead4', // Sold (Teal/Cyan - distinct but thematic)
+                    '#10b981', // Delivered (Emerald)
+                    '#64748b'  // Registered (Slate)
                 ],
-                borderColor: 'transparent',
+                // Remap colors to match keys order: Registered, In Transit, Sold, Delivered? 
+                // Wait, Object.values might be insertion order. 
+                // Better to map explicitly or ensure init order.
+                // Init order: Registered, In Transit, Sold, Delivered.
+                // Colors below correspond to: Registered, In Transit, Sold, Delivered.
+                backgroundColor: [
+                    '#64748b', // Registered (Slate)
+                    '#38bdf8', // In Transit (Info Blue)
+                    '#818cf8', // Sold (Indigo - distinct)
+                    '#34d399'  // Delivered (Soft Green)
+                ],
                 borderWidth: 0,
-                borderRadius: 4,
                 hoverOffset: 4
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            cutout: '75%', // Thinner ring for minimalist look
+            cutout: '85%', // Ultra minimalist thin ring
             plugins: {
                 legend: {
-                    position: 'right',
+                    position: 'bottom',
                     labels: {
-                        color: '#94a3b8', // Slate-400 text
-                        font: { family: "'Inter', sans-serif", size: 11 },
+                        color: '#94a3b8',
                         usePointStyle: true,
-                        boxWidth: 8
+                        boxWidth: 8,
+                        font: { family: "'Inter', sans-serif", size: 11 }
                     }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                    titleColor: '#f8fafc',
+                    bodyColor: '#e2e8f0',
+                    borderColor: 'rgba(56, 189, 248, 0.2)',
+                    borderWidth: 1,
+                    padding: 10,
+                    cornerRadius: 8,
+                    displayColors: true,
+                    boxPadding: 4
                 }
             }
         }
@@ -554,14 +579,26 @@ registerForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     toggleSpinner(registerForm, true);
 
-    // STRICT 4-COLUMN INPUT
-    const newRecord = {
-        "Product id": document.getElementById('product_id').value,
-        "Product type": document.getElementById('product_type').value,
-        "Product detail": document.getElementById('product_detail').value,
-        "Created by": document.getElementById('created_by').value,
+    const productId = document.getElementById('product_id').value;
+    const productType = document.getElementById('product_type').value;
+    const productDetail = document.getElementById('product_detail').value;
+    const createdBy = document.getElementById('created_by').value;
 
-        // Default values to satisfy potential NOT NULL constraints
+    // 1. BLOCKCHAIN INTEGRATION: Call our Web3 Service first!
+    const txHash = await Web3Service.registerProduct(productType, createdBy);
+
+    if (!txHash) {
+        // If the user rejects the MetaMask transaction, stop here.
+        toggleSpinner(registerForm, false);
+        return;
+    }
+
+    // 2. SUPABASE INTEGRATION: Save to database only after blockchain success
+    const newRecord = {
+        "Product id": productId,
+        "Product type": productType,
+        "Product detail": productDetail,
+        "Created by": createdBy,
         "Sell by": "Pending",
         "Transferred to supplier": "Pending",
         "Delivered to": "Pending"
@@ -570,10 +607,15 @@ registerForm.addEventListener('submit', async (e) => {
     const { error } = await supabaseClient.from('products').insert([newRecord]);
 
     if (error) {
-        showToast(`Error: ${error.message}`, true);
-        console.error(error);
+        showToast(`Offline Mode (Blockchain TX: ${txHash.substring(0, 8)}...)`, false);
+        console.error("Supabase Error:", error);
+
+        // Even if Database fails, Blockchain succeeded! Update UI manually.
+        allProductEvents.unshift(newRecord);
+        renderRegisteredProducts();
+        openModal(productId);
     } else {
-        showToast('Product Registered Successfully!', false);
+        showToast('Product Registered & Secured on Blockchain!', false);
         registerForm.reset();
         await fetchAndRenderProducts();
         openModal(newRecord["Product id"]);
@@ -589,14 +631,15 @@ function renderRegisteredProducts() {
         return;
     }
 
-    list.innerHTML = allProductEvents.map(p => `
-        <div class="product-item flex items-center justify-between bg-slate-800/50 p-3 rounded-lg border border-slate-700 mb-2">
+    list.innerHTML = allProductEvents.map((p, index) => `
+        <div class="product-item flex items-center justify-between bg-slate-800/50 p-3 rounded-lg border border-slate-700 mb-2 tx-item"
+             style="animation-delay: ${index * 100}ms">
             <div>
-                <p class="font-semibold text-white">${p["Created by"]}</p>
+                <p class="font-semibold text-white group-hover:text-sky-300 transition-colors">${p["Created by"]}</p>
                 <p class="text-sm text-slate-400 font-mono break-all">${p["Product id"]}</p>
                 <p class="text-xs text-slate-500">${p["Product type"]}</p>
             </div>
-            <button onclick="openModal('${p["Product id"]}')" class="p-2 rounded-md hover:bg-slate-700 transition flex-shrink-0 ml-2">
+            <button onclick="openModal('${p["Product id"]}')" class="p-2 rounded-md hover:bg-slate-700 transition flex-shrink-0 ml-2 text-sky-400 hover:text-white hover:shadow-[0_0_10px_rgba(56,189,248,0.3)]">
                 Scan QR
             </button>
         </div>

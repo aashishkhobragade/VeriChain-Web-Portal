@@ -1,0 +1,113 @@
+{
+  "_format": "hh-sol-cache-2",
+  "files": {
+    "/Users/ashish/Desktop/VeriChain-Web-Portal/smartcontract/ManufacturerProductRegister.sol": {
+      "lastModificationDate": 1773222980803,
+      "contentHash": "ca168a77bfcecc32a9e696041d7d9c77",
+      "sourceName": "smartcontract/ManufacturerProductRegister.sol",
+      "solcConfig": {
+        "version": "0.8.28",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "ManufacturerProductRegister"
+      ]
+    },
+    "/Users/ashish/Desktop/VeriChain-Web-Portal/smartcontract/ManufacturerToRetailer.sol": {
+      "lastModificationDate": 1773222999653,
+      "contentHash": "f4517f5da1162e2c6cb4b42230e84f7f",
+      "sourceName": "smartcontract/ManufacturerToRetailer.sol",
+      "solcConfig": {
+        "version": "0.8.28",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "ManufacturerToRetailer"
+      ]
+    },
+    "/Users/ashish/Desktop/VeriChain-Web-Portal/smartcontract/RetailerToConsumer.sol": {
+      "lastModificationDate": 1773223032932,
+      "contentHash": "ca57914c35bbc6841f32308f5ed31dea",
+      "sourceName": "smartcontract/RetailerToConsumer.sol",
+      "solcConfig": {
+        "version": "0.8.28",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "RetailerToConsumer"
+      ]
+    }
+  }
+}

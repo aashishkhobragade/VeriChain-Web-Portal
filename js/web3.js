@@ -6,7 +6,172 @@ let contract = null;
 let userAddress = null;
 
 // Replace with your deployed contract address
-const CONTRACT_ADDRESS = "0x0000000000000000000000000000000000000000"; // Placeholder
+const CONTRACT_ADDRESS = "0x14dc5Dfdc9e531c6277f9A8545E776ddc06f613a"; // Placeholder
+const CONTRACT_ABI = [
+    {
+      "inputs": [],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "id",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "manufacturer",
+          "type": "string"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
+        }
+      ],
+      "name": "ProductRegistered",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "owner",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "productCount",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "products",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "id",
+          "type": "uint256"
+        },
+        {
+          "internalType": "string",
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "detail",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "manufacturerName",
+          "type": "string"
+        },
+        {
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "currentOwner",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "_name",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "_detail",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "_manufacturerName",
+          "type": "string"
+        }
+      ],
+      "name": "registerProduct",
+      "outputs": [],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "registrationFee",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_fee",
+          "type": "uint256"
+        }
+      ],
+      "name": "setRegistrationFee",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "withdrawFees",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+];
+
 
 const Web3Service = {
     isConnected: false,
@@ -61,7 +226,10 @@ const Web3Service = {
     },
 
     async registerProduct(name, origin) {
+        console.log("1. registerProduct function called with:", name, origin);
+
         if (!this.isConnected || !contract) {
+            console.warn("2. Not connected or contract is null. Falling back to DEMO mode.");
             // Fallback for demo when not connected, still show modal for effect
             this.showTxModal("Registering Product", "Initiating secure handshake...");
             await new Promise(r => setTimeout(r, 1500));
@@ -74,19 +242,24 @@ const Web3Service = {
         }
 
         try {
+            console.log("3. Attempting real blockchain transaction...");
             this.showTxModal("Registering Product", "Please confirm transaction in your wallet...");
-            const tx = await contract.registerProduct(name, origin);
+
+            console.log("4. Calling contract.registerProduct...");
+            const tx = await contract.registerProduct(name, "Details Placeholder", origin, { value: ethers.parseEther("0.001") });
+            console.log("5. Transaction sent to MetaMask! Hash:", tx.hash);
 
             this.updateTxModal("Broadcasting to Ethereum Network...");
             await tx.wait();
+            console.log("6. Transaction Mined successfully.");
 
             this.updateTxModal("Transaction Confirmed!");
             setTimeout(() => this.hideTxModal(), 1000);
             return tx.hash;
         } catch (error) {
-            console.error("Web3 Error:", error);
+            console.error("WEB3 FATAL ERROR during registerProduct:", error);
             this.hideTxModal();
-            showToast(`Transaction Failed: ${error.reason || "User rejected"}`, true);
+            showToast(`Transaction Failed: ${error.message || "User rejected"}`, true);
             return null;
         }
     },

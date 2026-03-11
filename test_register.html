@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head><title>Web3 Test</title></head>
+<body>
+    <button id="connectBtn">Connect MetaMask</button>
+    <button id="registerBtn">Register Dummy Product</button>
+    <div id="log" style="white-space: pre-wrap; margin-top: 20px; font-family: monospace;"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
+    <script src="js/web3.js"></script>
+    <script>
+        const log = (msg) => {
+            document.getElementById('log').textContent += msg + '\n';
+            console.log(msg);
+        };
+        
+        // Mock UI functions that web3.js expects so it doesn't crash on null elements
+        window.showToast = log;
+
+        document.getElementById('connectBtn').onclick = async () => {
+            log("Attempting connect...");
+            const success = await Web3Service.connectWallet();
+            log("Connect result: " + success);
+        };
+
+        document.getElementById('registerBtn').onclick = async () => {
+            log("Attempting register...");
+            try {
+                const txHash = await Web3Service.registerProduct("TEST_PROD", "Test Origin");
+                log("Result Tx: " + txHash);
+            } catch (e) {
+                log("Caught Error: " + e.message);
+            }
+        };
+    </script>
+</body>
+</html>
