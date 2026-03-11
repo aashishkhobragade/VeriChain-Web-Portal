@@ -13,23 +13,10 @@ contract ManufacturerToRetailer {
 
     mapping(uint256 => Shipment) public shipments;
     
-    address public owner;
-    uint256 public shipmentFee = 0.001 ether;
-
     event ShipmentCreated(uint256 indexed productId, address from, address to, uint256 timestamp);
     event ShipmentReceived(uint256 indexed productId, address retailer, uint256 timestamp);
 
-    constructor() {
-        owner = msg.sender;
-    }
-
-    function setShipmentFee(uint256 _fee) public {
-        require(msg.sender == owner, "Only owner can change fee");
-        shipmentFee = _fee;
-    }
-
-    function shipProduct(uint256 _productId, address _retailer) public payable {
-        require(msg.value == shipmentFee, "Insufficient shipment fee");
+    function shipProduct(uint256 _productId, address _retailer) public {
         // In a real system, verify msg.sender is the current owner
         shipments[_productId] = Shipment(
             _productId,
@@ -48,10 +35,5 @@ contract ManufacturerToRetailer {
         
         shipment.status = "Received";
         emit ShipmentReceived(_productId, msg.sender, block.timestamp);
-    }
-
-    function withdrawFees() public {
-        require(msg.sender == owner, "Only owner can withdraw");
-        payable(owner).transfer(address(this).balance);
     }
 }

@@ -52,3 +52,63 @@
 ::1 - - [11/Mar/2026 15:19:43] "GET /service-worker.js HTTP/1.1" 404 -
 ::1 - - [11/Mar/2026 15:20:13] code 404, message File not found
 ::1 - - [11/Mar/2026 15:20:13] "GET /service-worker.js HTTP/1.1" 404 -
+::1 - - [11/Mar/2026 17:47:16] code 404, message File not found
+::1 - - [11/Mar/2026 17:47:16] "GET /favicon.ico HTTP/1.1" 404 -
+::1 - - [11/Mar/2026 17:49:51] "GET /index.html HTTP/1.1" 200 -
+::1 - - [11/Mar/2026 17:49:51] "GET /js/abi.js?v=2 HTTP/1.1" 200 -
+::1 - - [11/Mar/2026 17:49:51] "GET /js/app.js?v=2 HTTP/1.1" 200 -
+::1 - - [11/Mar/2026 17:49:51] "GET /js/web3.js?v=2 HTTP/1.1" 200 -
+::1 - - [11/Mar/2026 17:50:28] "GET /index.html HTTP/1.1" 304 -
+::1 - - [11/Mar/2026 17:50:29] "GET /js/web3.js?v=2 HTTP/1.1" 304 -
+::1 - - [11/Mar/2026 17:50:29] "GET /js/app.js?v=2 HTTP/1.1" 304 -
+::1 - - [11/Mar/2026 17:50:46] "GET /index.html HTTP/1.1" 304 -
+::1 - - [11/Mar/2026 17:51:15] "GET /js/web3.js?v=2 HTTP/1.1" 304 -
+::1 - - [11/Mar/2026 17:51:15] "GET /js/app.js?v=2 HTTP/1.1" 304 -
+::1 - - [11/Mar/2026 18:19:24] "GET /index.html HTTP/1.1" 200 -
+::1 - - [11/Mar/2026 19:15:11] "GET /index.html HTTP/1.1" 200 -
+::1 - - [11/Mar/2026 19:25:38] "GET /index.html HTTP/1.1" 304 -
+::1 - - [11/Mar/2026 19:28:28] "GET /index.html HTTP/1.1" 200 -
+::1 - - [11/Mar/2026 19:31:48] "GET /index.html HTTP/1.1" 200 -
+::1 - - [11/Mar/2026 19:31:48] "GET /css/styles.css HTTP/1.1" 200 -
+::1 - - [11/Mar/2026 19:31:48] "GET /js/web3.js HTTP/1.1" 200 -
+::1 - - [11/Mar/2026 19:31:48] "GET /js/app.js HTTP/1.1" 200 -
+::1 - - [11/Mar/2026 19:31:49] code 404, message File not found
+::1 - - [11/Mar/2026 19:31:49] "GET /favicon.ico HTTP/1.1" 404 -
+::ffff:127.0.0.1 - - [11/Mar/2026 19:47:35] "GET /index.html HTTP/1.1" 200 -
+::ffff:127.0.0.1 - - [11/Mar/2026 19:47:35] "GET /css/styles.css HTTP/1.1" 200 -
+::ffff:127.0.0.1 - - [11/Mar/2026 19:47:35] "GET /js/web3.js HTTP/1.1" 200 -
+::ffff:127.0.0.1 - - [11/Mar/2026 19:47:35] "GET /js/app.js HTTP/1.1" 200 -
+::ffff:127.0.0.1 - - [11/Mar/2026 19:47:36] code 404, message File not found
+::ffff:127.0.0.1 - - [11/Mar/2026 19:47:36] "GET /favicon.ico HTTP/1.1" 404 -
+::ffff:127.0.0.1 - - [11/Mar/2026 19:47:38] code 404, message File not found
+::ffff:127.0.0.1 - - [11/Mar/2026 19:47:38] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+::ffff:127.0.0.1 - - [11/Mar/2026 19:47:38] code 404, message File not found
+::ffff:127.0.0.1 - - [11/Mar/2026 19:47:38] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+::ffff:127.0.0.1 - - [11/Mar/2026 19:47:38] code 404, message File not found
+::ffff:127.0.0.1 - - [11/Mar/2026 19:47:38] "GET /favicon.ico HTTP/1.1" 404 -
+::ffff:127.0.0.1 - - [11/Mar/2026 19:48:18] "GET /index.html HTTP/1.1" 200 -
+::ffff:127.0.0.1 - - [11/Mar/2026 19:48:18] "GET /css/styles.css HTTP/1.1" 200 -
+::ffff:127.0.0.1 - - [11/Mar/2026 19:48:18] "GET /js/web3.js HTTP/1.1" 200 -
+::ffff:127.0.0.1 - - [11/Mar/2026 19:48:18] "GET /js/app.js HTTP/1.1" 200 -
+::ffff:127.0.0.1 - - [11/Mar/2026 19:48:18] code 404, message File not found
+::ffff:127.0.0.1 - - [11/Mar/2026 19:48:18] "GET /favicon.ico HTTP/1.1" 404 -
+::ffff:127.0.0.1 - - [11/Mar/2026 19:48:40] "GET /index.html HTTP/1.1" 304 -
+::ffff:127.0.0.1 - - [11/Mar/2026 19:48:52] "GET /index.html HTTP/1.1" 200 -
+::ffff:127.0.0.1 - - [11/Mar/2026 19:48:52] "GET /css/styles.css HTTP/1.1" 200 -
+::ffff:127.0.0.1 - - [11/Mar/2026 19:48:52] "GET /js/web3.js HTTP/1.1" 200 -
+::ffff:127.0.0.1 - - [11/Mar/2026 19:48:52] "GET /js/app.js HTTP/1.1" 200 -
+::ffff:127.0.0.1 - - [11/Mar/2026 19:48:53] code 404, message File not found
+::ffff:127.0.0.1 - - [11/Mar/2026 19:48:53] "GET /favicon.ico HTTP/1.1" 404 -
+::ffff:127.0.0.1 - - [11/Mar/2026 19:51:26] "GET /index.html HTTP/1.1" 200 -
+::ffff:127.0.0.1 - - [11/Mar/2026 19:51:26] "GET /css/styles.css HTTP/1.1" 200 -
+::ffff:127.0.0.1 - - [11/Mar/2026 19:51:26] "GET /js/app.js HTTP/1.1" 200 -
+::ffff:127.0.0.1 - - [11/Mar/2026 19:51:26] "GET /js/web3.js HTTP/1.1" 200 -
+::ffff:127.0.0.1 - - [11/Mar/2026 19:51:27] code 404, message File not found
+::ffff:127.0.0.1 - - [11/Mar/2026 19:51:27] "GET /favicon.ico HTTP/1.1" 404 -
+::ffff:127.0.0.1 - - [11/Mar/2026 19:52:08] code 404, message File not found
+::ffff:127.0.0.1 - - [11/Mar/2026 19:52:08] "GET /favicon.ico HTTP/1.1" 404 -
+::ffff:127.0.0.1 - - [11/Mar/2026 19:54:32] "GET /index.html HTTP/1.1" 304 -
+::ffff:127.0.0.1 - - [11/Mar/2026 19:54:32] "GET /js/web3.js HTTP/1.1" 304 -
+::ffff:127.0.0.1 - - [11/Mar/2026 19:54:32] code 404, message File not found
+::ffff:127.0.0.1 - - [11/Mar/2026 19:54:32] "GET /favicon.ico HTTP/1.1" 404 -
+::ffff:127.0.0.1 - - [11/Mar/2026 19:55:56] "GET /index.html HTTP/1.1" 304 -

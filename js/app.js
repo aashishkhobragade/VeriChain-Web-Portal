@@ -585,9 +585,10 @@ registerForm.addEventListener('submit', async (e) => {
     const createdBy = document.getElementById('created_by').value;
 
     // 1. BLOCKCHAIN INTEGRATION: Call our Web3 Service first!
-    const txHash = await Web3Service.registerProduct(productType, createdBy);
+    // Passing productType (as name), productDetail (as detail), and createdBy (as manufacturerName)
+    const txHash = await Web3Service.registerProduct(productType, productDetail, createdBy);
 
-    if (!txHash) {
+    if (!txHash || txHash.startsWith("TX-DEMO")) {
         // If the user rejects the MetaMask transaction, stop here.
         toggleSpinner(registerForm, false);
         return;
