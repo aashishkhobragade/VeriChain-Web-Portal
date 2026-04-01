@@ -22,6 +22,9 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <link rel="stylesheet" href="css/styles.css">
+    <!-- Generate PDF & Image scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 
 <body class="bg-slate-900 text-slate-300 antialiased selection:bg-sky-500 selection:text-white">
@@ -104,7 +107,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                     <div class="card p-6 flex items-center justify-between">
                         <div>
-                            <p class="text-slate-400 text-sm font-medium">Total Products</p>
+                            <p class="text-slate-400 text-sm font-medium">Total Consignments</p>
                             <h3 class="text-3xl font-bold text-white mt-1" id="stat-total">0</h3>
                         </div>
                         <div class="p-3 bg-sky-500/10 rounded-full">
@@ -189,37 +192,244 @@
             <div id="manufacturer" class="tab-content fade-in">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div class="card p-6">
-                        <h2 class="text-2xl font-semibold mb-4 text-white">Register New Product Event</h2>
+                        <h2 class="text-2xl font-semibold mb-4 text-white">Register New Consignment</h2>
                         <form id="registerProductForm" class="space-y-4">
-                            <!-- 1. Product ID -->
-                            <input type="text" id="product_id" placeholder="Product ID (e.g., PROD-A100)"
+                            <!-- 1. Consignment ID -->
+                            <input type="text" id="product_id" placeholder="Consignment ID (e.g., CSG-A100)"
                                 class="form-input" required>
 
-                            <!-- 2. Product Type -->
-                            <input type="text" id="product_type" placeholder="Product Type (e.g., Electronics)"
+                            <!-- 2. Product Category -->
+                            <input type="text" id="product_type" placeholder="Product Category (e.g., Electronics)"
                                 class="form-input" required>
 
                             <!-- 3. Product Detail -->
-                            <input type="text" id="product_detail" placeholder="Product Detail (e.g., High-end GPU)"
+                            <input type="text" id="product_detail" placeholder="Product Detail (e.g., 50x High-end GPUs)"
                                 class="form-input" required>
 
-                            <!-- 4. Created By -->
-                            <input type="text" id="created_by" placeholder="Created By (e.g., ManufacturerX)"
+                            <!-- 4. Quantity -->
+                            <input type="number" id="product_quantity" placeholder="Quantity / Units in Consignment" min="1"
                                 class="form-input" required>
 
-                            <button type="submit" class="w-full bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white font-semibold py-3 px-4 rounded-lg shadow-lg shadow-sky-900/50 transition relative overflow-hidden group submit-button">
-                                <span class="relative z-10 button-text">Register Product (0.001 ETH Fee)</span>
+                            <!-- 5. Price per unit (for invoice) -->
+                            <input type="number" id="product_price" placeholder="Price per Unit (₹ INR)" min="0" step="0.01"
+                                class="form-input">
+
+                            <!-- 6. Manufacturer Name -->
+                            <input type="text" id="created_by" placeholder="Manufacturer Name (e.g., ABC Industries)"
+                                class="form-input" required>
+
+                            <!-- 7. Retailer Address (NEW) -->
+                            <input type="text" id="retailer_address" placeholder="Retailer Address / Wallet (e.g., 0xABC... or RetailerY)"
+                                class="form-input" required>
+
+                            <button type="submit"
+                                class="w-full bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white font-semibold py-3 px-4 rounded-lg shadow-lg shadow-sky-900/50 transition relative overflow-hidden group submit-button">
+                                <span class="relative z-10 button-text">Register Consignment (₹250 Transaction Security Fee)</span>
                                 <div class="spinner hidden ml-2"></div>
                             </button>
                         </form>
                     </div>
                     <div class="card p-6">
-                        <h2 class="text-2xl font-semibold mb-4 text-white">Registered Products</h2>
+                        <h2 class="text-2xl font-semibold mb-4 text-white">Registered Consignments</h2>
                         <div id="registeredProductsList" class="space-y-3 max-h-96 overflow-y-auto pr-2">
                             <div class="text-center py-10 px-4">
                                 <div class="spinner mx-auto" style="width: 32px; height: 32px; border-width: 3px;">
                                 </div>
                                 <p class="mt-4 text-slate-400">Loading products from database...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NEW: Consignment Tracking Dashboard -->
+                <div class="mt-8">
+                    <div class="card p-0 overflow-hidden">
+                        <!-- Header -->
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-5 py-4 border-b border-slate-700/60">
+                            <div class="flex items-center gap-3">
+                                <div class="p-2 bg-sky-500/10 rounded-lg">
+                                    <svg class="w-5 h-5 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10l2-2h8a1 1 0 001-1zM21 11.5l-2-2.5-2 2.5M17 11.5V14"/></svg>
+                                </div>
+                                <div>
+                                    <h2 class="text-base font-semibold text-white leading-tight">Consignment Tracking</h2>
+                                    <p class="text-slate-500 text-xs">Latest 50 parcels — live from database</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="flex items-center bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-1.5 gap-1.5">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse"></span>
+                                    <span class="text-[11px] text-slate-400">Active <span id="ct-active-count" class="text-sky-300 font-bold ml-0.5">0</span></span>
+                                </div>
+                                <div class="flex items-center bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-1.5 gap-1.5">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                                    <span class="text-[11px] text-slate-400">Delivered <span id="ct-delivered-count" class="text-emerald-300 font-bold ml-0.5">0</span></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Filter Tabs -->
+                        <div class="flex items-center gap-1.5 px-5 py-3 border-b border-slate-700/40 bg-slate-800/20">
+                            <button onclick="renderConsignmentTracker('all')" data-ct-filter="all"
+                                class="ct-tab-btn px-3 py-1 rounded-md text-xs font-semibold transition bg-sky-500/20 text-sky-300 border border-sky-500/50">All</button>
+                            <button onclick="renderConsignmentTracker('registered')" data-ct-filter="registered"
+                                class="ct-tab-btn px-3 py-1 rounded-md text-xs font-semibold transition bg-slate-800/60 text-slate-500 border border-slate-700 hover:text-slate-300">Registered</button>
+                            <button onclick="renderConsignmentTracker('in-transit')" data-ct-filter="in-transit"
+                                class="ct-tab-btn px-3 py-1 rounded-md text-xs font-semibold transition bg-slate-800/60 text-slate-500 border border-slate-700 hover:text-slate-300">In Transit</button>
+                            <button onclick="renderConsignmentTracker('delivered')" data-ct-filter="delivered"
+                                class="ct-tab-btn px-3 py-1 rounded-md text-xs font-semibold transition bg-slate-800/60 text-slate-500 border border-slate-700 hover:text-slate-300">Delivered</button>
+                        </div>
+
+                        <!-- Scrollable Table -->
+                        <div class="overflow-x-auto" style="max-height:360px; overflow-y:auto;">
+                            <table class="w-full text-sm">
+                                <thead>
+                                    <tr class="bg-slate-800/90 text-slate-500 text-[11px] uppercase tracking-widest">
+                                        <th class="py-2.5 px-4 text-left font-medium border-b border-slate-700/60">Invoice ID</th>
+                                        <th class="py-2.5 px-4 text-left font-medium border-b border-slate-700/60">Consignment ID</th>
+                                        <th class="py-2.5 px-4 text-left font-medium border-b border-slate-700/60 hidden sm:table-cell">Category</th>
+                                        <th class="py-2.5 px-4 text-center font-medium border-b border-slate-700/60 hidden md:table-cell">Qty</th>
+                                        <th class="py-2.5 px-4 text-left font-medium border-b border-slate-700/60 hidden md:table-cell">Retailer Address</th>
+                                        <th class="py-2.5 px-4 text-center font-medium border-b border-slate-700/60">Status</th>
+                                        <th class="py-2.5 px-4 text-right font-medium border-b border-slate-700/60 hidden lg:table-cell">Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="consignment-tracker-body" class="divide-y divide-slate-700/30">
+                                    <tr>
+                                        <td colspan="7" class="py-10 text-center text-slate-500 text-xs italic">Loading consignments...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Footer -->
+                        <div class="px-5 py-2.5 border-t border-slate-700/40 bg-slate-800/20 flex justify-between items-center">
+                            <p id="ct-footer" class="text-[11px] text-slate-600"></p>
+                            <p class="text-[11px] text-slate-600">Scroll to view all</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NEW: Invoice Generation Section -->
+                <div class="mt-8 grid grid-cols-1 gap-8">
+                    <div class="card p-6 border-2 border-dashed border-slate-700">
+                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                            <h2 class="text-2xl font-semibold text-white">Invoice Generation System</h2>
+                            <div class="flex gap-2 w-full md:w-auto">
+                                <input type="text" id="invoice_lookup_id" placeholder="Fetch Consignment ID (e.g., CSG-A100)" class="form-input text-sm py-2 px-3 w-full md:w-64">
+                                <button type="button" id="invoice_lookup_btn" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg transition text-sm font-semibold whitespace-nowrap flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/></svg>
+                                    Fetch
+                                </button>
+                            </div>
+                        </div>
+                        <div class="flex justify-end items-center mb-6">
+                            <div class="flex space-x-3">
+                                <button type="button" onclick="downloadInvoiceAsImage()"
+                                    class="flex items-center space-x-2 bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg transition">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                                    </svg>
+                                    <span>Save as Image</span>
+                                </button>
+                                <button type="button" onclick="downloadInvoiceAsPDF()"
+                                    class="flex items-center space-x-2 bg-red-600/90 hover:bg-red-500 text-white px-4 py-2 rounded-lg transition">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                                        </path>
+                                    </svg>
+                                    <span>Save as PDF</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-8 rounded-lg text-slate-900 mx-auto" id="invoice-template">
+                            <div class="flex justify-between items-start border-b-2 border-slate-200 pb-6 mb-6">
+                                <div>
+                                    <div class="flex items-center space-x-2 mb-2">
+                                        <svg class="w-8 h-8 text-sky-600" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                            viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M9 12.75L11.25 15 15 9.75" />
+                                        </svg>
+                                        <h3 class="text-2xl font-bold font-mono text-slate-800">VeriChain</h3>
+                                    </div>
+                                    <p class="text-sm text-slate-500">Decentralized Supply Chain</p>
+                                </div>
+                                <div class="text-right">
+                                    <h1 class="text-3xl font-black text-slate-300 uppercase tracking-widest">INVOICE
+                                    </h1>
+                                    <p class="font-mono mt-2 text-slate-600">Invoice ID: <span id="inv-num">—</span></p>
+                                    <p class="text-sm text-slate-500 mt-1">Date: <span id="inv-date"></span></p>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-8 mb-6">
+                                <div>
+                                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Owner / Supplier</p>
+                                    <p class="font-bold text-slate-800" id="inv-owner-name">ManufacturerX</p>
+                                    <p class="text-slate-600 text-sm">Origin: <span id="inv-origin-loc">Factory A, Mumbai</span></p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Destination</p>
+                                    <p class="font-bold text-slate-800" id="inv-retailer-name">Retailer Name</p>
+                                    <p class="text-slate-600 text-sm font-mono break-all text-red-500" id="inv-retailer-address">Retailer Not Found</p>
+                                </div>
+                            </div>
+
+                            <div class="mb-6 p-4 bg-slate-50 border border-slate-200 rounded-lg">
+                                <h4 class="font-bold text-slate-700 mb-2 border-b border-slate-200 pb-2">Supply Chain Information</h4>
+                                <div class="grid grid-cols-2 gap-4 text-sm">
+                                    <div><span class="text-slate-500">Blockchain Network:</span> <span class="font-mono text-slate-800 font-medium tracking-tight">Ethereum Mainnet</span></div>
+                                    <div><span class="text-slate-500">Smart Contract:</span> <span class="font-mono text-slate-800 font-medium tracking-tight">0xAFBb...9aE2</span></div>
+                                    <div><span class="text-slate-500">Verification Status:</span> <span class="text-green-600 font-bold">Authentic</span></div>
+                                    <div><span class="text-slate-500">Creation Time:</span> <span class="font-mono text-slate-800 font-medium tracking-tight" id="inv-creation-time"></span></div>
+                                </div>
+                            </div>
+
+                            <table class="w-full mb-8 border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-100 text-slate-600 text-sm">
+                                        <th class="py-3 px-4 text-left font-semibold">Consignment ID & Description</th>
+                                        <th class="py-3 px-4 text-center font-semibold">Quantity</th>
+                                        <th class="py-3 px-4 text-right font-semibold">Unit Price (₹)</th>
+                                        <th class="py-3 px-4 text-right font-semibold">Total (₹)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="border-b border-slate-100">
+                                        <td class="py-4 px-4">
+                                            <p class="font-mono text-sm font-bold text-slate-800" id="inv-prod-id">CSG-A100</p>
+                                            <p class="text-sm text-slate-500" id="inv-prod-detail">Consignment Description</p>
+                                            <p class="text-xs text-slate-400 mt-1">Category: <span id="inv-prod-type">General</span></p>
+                                        </td>
+                                        <td class="py-4 px-4 text-sm text-center font-medium text-slate-800" id="inv-prod-qty">50</td>
+                                        <td class="py-4 px-4 text-sm text-right font-medium text-slate-800">₹<span id="inv-prod-price">1000.00</span></td>
+                                        <td class="py-4 px-4 text-sm text-right font-bold text-slate-900">₹<span id="inv-prod-total">50000.00</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <div class="flex flex-col items-end pt-4 border-t-2 border-slate-200">
+                                <div class="flex justify-between w-[350px] mb-2 text-sm text-slate-600">
+                                    <span>Subtotal:</span>
+                                    <span>₹<span id="inv-subtotal">50000.00</span></span>
+                                </div>
+                                <div class="flex justify-between w-[350px] mb-2 text-sm text-slate-600">
+                                    <span>Mfr Registration Fee (Paid):</span>
+                                    <span class="font-mono text-slate-500"><span id="inv-blockchain-fee">₹250</span></span>
+                                </div>
+                                <div class="flex justify-between w-[350px] mb-4 text-sm text-slate-600 border-b border-slate-200 pb-2">
+                                    <span>Retailer Transfer Fee (Due):</span>
+                                    <span class="font-mono">₹<span id="inv-transfer-fee">125</span></span>
+                                </div>
+                                <div class="flex justify-between w-[350px]">
+                                    <span class="font-bold text-slate-800 mt-1">Total Payable by Retailer:</span>
+                                    <span class="font-bold text-2xl text-sky-600">₹<span id="inv-grand-total">50125.00</span></span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -230,12 +440,14 @@
             <div id="logistics" class="tab-content hidden">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div class="card p-6">
-                        <h2 class="text-2xl font-semibold mb-4 text-white">Log New Product Event</h2>
+                        <h2 class="text-2xl font-semibold mb-4 text-white">Log New Consignment Event</h2>
                         <form id="updateStatusForm" class="space-y-4">
-                            <input type="text" id="logistics_item_id" placeholder="Enter Product ID to Update"
+                            <input type="text" id="logistics_item_id" placeholder="Enter Consignment ID to Update"
                                 class="form-input" required>
-                            <input type="text" id="logistics_customer" placeholder="Current Holder (e.g., RetailerY)"
+                            <input type="text" id="logistics_customer" placeholder="Retailer Name (e.g., RetailerY)"
                                 class="form-input" required>
+                            <input type="text" id="logistics_retailer_address" placeholder="Retailer Address / Wallet (e.g., 0xABC...)"
+                                class="form-input">
                             <select id="order_status" class="form-input" required>
                                 <option value="Shipped">Shipped</option>
                                 <option value="In Transit">In Transit</option>
@@ -284,14 +496,113 @@
 
             <!-- Retailer Interface -->
             <div id="retailer" class="tab-content hidden">
+
+                <!-- ── Consignment Lookup & Payment Card (full width) ── -->
+                <div class="card p-6 mb-8">
+                    <h2 class="text-2xl font-semibold mb-1 text-white">Consignment Lookup & Payment</h2>
+                    <p class="text-slate-400 text-sm mb-5">Enter a Consignment ID to fetch details and see the total amount payable.</p>
+
+                    <!-- Search Row -->
+                    <div class="flex gap-3 mb-5">
+                        <input type="text" id="retailer_lookup_id"
+                            placeholder="Enter Consignment ID (e.g., CSG-A100)"
+                            class="form-input flex-1">
+                        <button id="retailer_lookup_btn"
+                            class="bg-sky-600 hover:bg-sky-500 text-white font-semibold px-5 py-2 rounded-lg transition flex items-center gap-2 whitespace-nowrap">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/>
+                            </svg>
+                            Fetch Details
+                        </button>
+                    </div>
+
+                    <!-- Result Panel (hidden until fetch) -->
+                    <div id="retailer_lookup_result" class="hidden">
+                        <!-- Details Grid -->
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
+                            <div class="bg-slate-800/60 rounded-lg p-3 border border-slate-700">
+                                <p class="text-xs text-slate-500 uppercase tracking-wider mb-1">Consignment ID</p>
+                                <p class="text-sm font-mono font-bold text-sky-400" id="lk-id">—</p>
+                            </div>
+                            <div class="bg-slate-800/60 rounded-lg p-3 border border-slate-700">
+                                <p class="text-xs text-slate-500 uppercase tracking-wider mb-1">Category</p>
+                                <p class="text-sm font-semibold text-white" id="lk-type">—</p>
+                            </div>
+                            <div class="bg-slate-800/60 rounded-lg p-3 border border-slate-700">
+                                <p class="text-xs text-slate-500 uppercase tracking-wider mb-1">Description</p>
+                                <p class="text-sm text-slate-300 truncate" id="lk-detail">—</p>
+                            </div>
+                            <div class="bg-slate-800/60 rounded-lg p-3 border border-slate-700">
+                                <p class="text-xs text-slate-500 uppercase tracking-wider mb-1">Quantity</p>
+                                <p class="text-sm font-bold text-white" id="lk-qty">—</p>
+                            </div>
+                            <div class="bg-slate-800/60 rounded-lg p-3 border border-slate-700">
+                                <p class="text-xs text-slate-500 uppercase tracking-wider mb-1">Manufacturer</p>
+                                <p class="text-sm text-slate-300" id="lk-mfr">—</p>
+                            </div>
+                            <div class="bg-slate-800/60 rounded-lg p-3 border border-slate-700">
+                                <p class="text-xs text-slate-500 uppercase tracking-wider mb-1">Retailer Address</p>
+                                <p class="text-xs font-mono text-slate-400 break-all" id="lk-retailer">—</p>
+                            </div>
+                            <div class="bg-slate-800/60 rounded-lg p-3 border border-slate-700">
+                                <p class="text-xs text-slate-500 uppercase tracking-wider mb-1">Invoice ID</p>
+                                <p class="text-xs font-mono text-slate-300" id="lk-invoice">—</p>
+                            </div>
+                            <div class="bg-slate-800/60 rounded-lg p-3 border border-slate-700">
+                                <p class="text-xs text-slate-500 uppercase tracking-wider mb-1">Current Stage</p>
+                                <p class="text-sm font-semibold" id="lk-stage">—</p>
+                            </div>
+                        </div>
+
+                        <!-- Payment Summary -->
+                        <div class="bg-gradient-to-r from-sky-900/40 to-blue-900/40 border border-sky-700/40 rounded-xl p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                            <div class="space-y-1 flex-1">
+                                <p class="text-xs text-slate-400 uppercase tracking-wider">Payment Breakdown</p>
+                                <div class="flex justify-between text-sm text-slate-300 max-w-xs">
+                                    <span>Unit Price (fetched):</span>
+                                    <span>₹<span id="lk-unit-price">—</span></span>
+                                </div>
+                                <div class="flex justify-between text-sm text-slate-300 max-w-xs">
+                                    <span>Quantity:</span>
+                                    <span id="lk-qty-summary">—</span>
+                                </div>
+                                <div class="flex justify-between text-sm text-slate-300 max-w-xs border-t border-slate-700 pt-1 mt-1">
+                                    <span>Transfer Security Fee:</span>
+                                    <span>₹<span id="lk-transfer-fee">—</span></span>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-slate-400 text-xs mb-1">Total Payable by Retailer</p>
+                                <p class="text-3xl font-bold text-sky-400">₹<span id="lk-total">0</span></p>
+                                <p class="text-xs text-slate-500 mt-1">incl. all fees</p>
+                            </div>
+                        </div>
+
+                        <!-- Auto-fill hint -->
+                        <p class="text-xs text-green-400 mt-3 flex items-center gap-1">
+                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                            Consignment ID auto-filled in the delivery form below.
+                        </p>
+                    </div>
+
+                    <!-- Not Found Message -->
+                    <div id="retailer_lookup_notfound" class="hidden text-center py-6 text-slate-500 text-sm italic">
+                        No consignment found with that ID. Please check and try again.
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div class="card p-6">
+
                         <h2 class="text-2xl font-semibold mb-4 text-white">Record Sale to Consumer</h2>
                         <form id="recordDeliveryForm" class="space-y-4">
-                            <input type="text" id="delivery_product_id" placeholder="Product ID (e.g., PROD-ABC-012)"
+                            <input type="text" id="delivery_product_id" placeholder="Consignment ID (e.g., CSG-A100)"
                                 class="form-input" required>
                             <input type="text" id="consumer_name" placeholder="Consumer Name (e.g., John Doe)"
                                 class="form-input" required>
+                            <input type="text" id="retailer_deliver_address" placeholder="Your Retailer Address / Wallet"
+                                class="form-input">
                             <button type="submit"
                                 class="submit-button w-full text-white py-3 rounded-lg font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 focus:ring-offset-slate-900 flex items-center justify-center">
                                 <span class="button-text">Mark Delivered to Consumer</span>
@@ -455,6 +766,165 @@
     <script src="js/web3.js"></script>
     <script src="js/app.js"></script>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const dateEl = document.getElementById('inv-date');
+            if (dateEl) {
+                const d = new Date();
+                dateEl.textContent = d.toLocaleDateString() + ' ' + d.toLocaleTimeString();
+            }
+
+            // Auto update invoice when manufacturer types details
+            const formInputs = ['product_id', 'product_type', 'product_detail', 'created_by', 'product_quantity', 'product_price', 'retailer_address'];
+            formInputs.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('input', updateInvoicePreview);
+            });
+            setTimeout(updateInvoicePreview, 500);
+
+            // Fetch Invoice Details
+            const invLookupBtn = document.getElementById('invoice_lookup_btn');
+            const invLookupInput = document.getElementById('invoice_lookup_id');
+            if (invLookupBtn && invLookupInput) {
+                invLookupBtn.addEventListener('click', async () => {
+                    const id = invLookupInput.value.trim();
+                    if (!id) {
+                        if (window.showToast) window.showToast('Please enter a Consignment ID.', true);
+                        return;
+                    }
+
+                    invLookupBtn.disabled = true;
+                    invLookupBtn.textContent = 'Fetching...';
+
+                    let fetchedData = null;
+                    if (window.supabaseClient) {
+                        const { data } = await window.supabaseClient.from('consignments').select('*').eq('consignment_id', id).maybeSingle();
+                        fetchedData = data;
+                    }
+
+                    // Fallback to offline events if no DB or not found
+                    if (!fetchedData && window.allProductEvents) {
+                        fetchedData = window.allProductEvents.find(p => (p.consignment_id || '').toLowerCase() === id.toLowerCase());
+                    }
+
+                    invLookupBtn.disabled = false;
+                    invLookupBtn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/></svg> Fetch`;
+
+                    if (!fetchedData) {
+                        if (window.showToast) window.showToast('Consignment not found.', true);
+                        return;
+                    }
+
+                    // Populate the Manufacturer Form elements so the auto-update catches it
+                    const setVal = (fid, v) => { const el = document.getElementById(fid); if (el) { el.value = v; el.dispatchEvent(new Event('input')); } };
+                    
+                    const unitPrice = parseFloat(fetchedData.unit_price_inr || fetchedData.security_fee_inr || 1000);
+                    const qty = parseInt(fetchedData.quantity) || 1;
+
+                    setVal('product_id', fetchedData.consignment_id);
+                    setVal('product_type', fetchedData.product_type);
+                    setVal('product_detail', fetchedData.product_detail);
+                    setVal('created_by', fetchedData.created_by);
+                    setVal('product_quantity', qty);
+                    setVal('product_price', unitPrice);
+                    setVal('retailer_address', fetchedData.retailer_address || '');
+                    
+                    if (window.showToast) window.showToast('Invoice fields populated!');
+                });
+
+                // Enter key support
+                invLookupInput.addEventListener('keydown', e => { if (e.key === 'Enter') invLookupBtn.click(); });
+            }
+        });
+
+        function updateInvoicePreview() {
+            const getVal = id => { const el = document.getElementById(id); return el ? el.value : ''; };
+            const setTxt = (id, val) => { const el = document.getElementById(id); if (el && val) el.textContent = val; };
+
+            setTxt('inv-prod-id', getVal('product_id') || 'CSG-A100');
+            setTxt('inv-prod-detail', getVal('product_detail') || 'Consignment Description');
+            setTxt('inv-prod-type', getVal('product_type') || 'General Category');
+            setTxt('inv-origin-loc', 'Factory / Warehouse, India');
+            setTxt('inv-owner-name', getVal('created_by') || 'ManufacturerX');
+
+            const retailerAddr = getVal('retailer_address');
+            if (retailerAddr) {
+                setTxt('inv-retailer-address', retailerAddr);
+                setTxt('inv-retailer-name', retailerAddr.startsWith('0x') ? 'Retailer Wallet' : 'Retailer / Distributor');
+            } else {
+                setTxt('inv-retailer-address', 'Retailer Not Found');
+                setTxt('inv-retailer-name', 'Retailer Name');
+            }
+
+            const qty = parseFloat(getVal('product_quantity')) || 50;
+            const price = parseFloat(getVal('product_price')) || 1000;
+            const subtotal = qty * price;
+
+            setTxt('inv-prod-qty', qty);
+            // Show prices in INR
+            setTxt('inv-prod-price', price.toLocaleString('en-IN', {minimumFractionDigits: 2}));
+            setTxt('inv-prod-total', subtotal.toLocaleString('en-IN', {minimumFractionDigits: 2}));
+            setTxt('inv-subtotal', subtotal.toLocaleString('en-IN', {minimumFractionDigits: 2}));
+
+            // Calculate fees in INR
+            const regFeeInr = window.getFeeInr ? window.getFeeInr() : '250';
+            const transferFeeInrStr = window.getTransferFeeInr ? window.getTransferFeeInr() : '125';
+            
+            setTxt('inv-blockchain-fee', `₹${regFeeInr}`);
+            setTxt('inv-transfer-fee', transferFeeInrStr);
+
+            // Compute Grand Total (payable by retailer)
+            const transferFeeInr = parseFloat(transferFeeInrStr.replace(/,/g, '')) || 125;
+            const grandTotal = subtotal + transferFeeInr;
+            setTxt('inv-grand-total', grandTotal.toLocaleString('en-IN', {minimumFractionDigits: 2}));
+
+            const creationTimeEl = document.getElementById('inv-creation-time');
+            if (creationTimeEl && !creationTimeEl.textContent) {
+                creationTimeEl.textContent = new Date().toLocaleString();
+            }
+        }
+
+        function downloadInvoiceAsImage() {
+            const invoiceElement = document.getElementById('invoice-template');
+
+            html2canvas(invoiceElement, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: '#ffffff'
+            }).then(canvas => {
+                const link = document.createElement('a');
+                const pid = document.getElementById('product_id');
+                const fileNameId = (pid && pid.value) ? pid.value : 'New';
+                link.download = 'VeriChain_Invoice_' + fileNameId + '.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+        }
+
+        function downloadInvoiceAsPDF() {
+            const invoiceElement = document.getElementById('invoice-template');
+
+            html2canvas(invoiceElement, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: '#ffffff'
+            }).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const jsPDF = window.jspdf.jsPDF;
+
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+                const margin = 10;
+                pdf.addImage(imgData, 'PNG', margin, margin, pdfWidth - (margin * 2), pdfHeight - (margin * 2));
+
+                const pid = document.getElementById('product_id');
+                const fileNameId = (pid && pid.value) ? pid.value : 'New';
+                pdf.save('VeriChain_Invoice_' + fileNameId + '.pdf');
+            });
+        }
+    </script>
 </body>
 
 </html>

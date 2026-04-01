@@ -2,69 +2,172 @@
 
 let provider = null;
 let signer = null;
-let contract = null;
+let contract = null;   // SupplyChainTracker (single unified contract)
 let userAddress = null;
 
-// Replace with your deployed contract address
-const CONTRACT_ADDRESS = "0x4ca64a3A6e6DCB47017186be94c913e2b7c8Aa4C"; // Placeholder
+// ── SupplyChainTracker — Unified Contract ────────────────────────────────────
+// Replace with your deployed address after: npx hardhat run scripts/deploy.js --network <net>
+const CONTRACT_ADDRESS = "0x56278645f2Db0fB87AB1A1bcd5A7BA9880576F1D";
+
 const CONTRACT_ABI = [
+    // ── Events ──────────────────────────────────────────────────────────────
     {
-        "inputs": [],
-        "stateMutability": "nonpayable",
-        "type": "constructor"
+        "anonymous": false,
+        "inputs": [
+            { "indexed": true, "internalType": "string", "name": "consignmentId", "type": "string" },
+            { "indexed": false, "internalType": "string", "name": "productType", "type": "string" },
+            { "indexed": false, "internalType": "uint256", "name": "quantity", "type": "uint256" },
+            { "indexed": false, "internalType": "string", "name": "invoiceId", "type": "string" },
+            { "indexed": false, "internalType": "address", "name": "manufacturer", "type": "address" },
+            { "indexed": false, "internalType": "address", "name": "retailerAddress", "type": "address" },
+            { "indexed": false, "internalType": "uint256", "name": "timestamp", "type": "uint256" }
+        ],
+        "name": "ConsignmentRegistered",
+        "type": "event"
     },
     {
         "anonymous": false,
         "inputs": [
-            {
-                "indexed": true,
-                "internalType": "uint256",
-                "name": "id",
-                "type": "uint256"
-            },
-            {
-                "indexed": false,
-                "internalType": "string",
-                "name": "name",
-                "type": "string"
-            },
-            {
-                "indexed": false,
-                "internalType": "string",
-                "name": "manufacturer",
-                "type": "string"
-            },
-            {
-                "indexed": false,
-                "internalType": "uint256",
-                "name": "timestamp",
-                "type": "uint256"
-            }
+            { "indexed": true, "internalType": "string", "name": "consignmentId", "type": "string" },
+            { "indexed": false, "internalType": "uint8", "name": "stage", "type": "uint8" },
+            { "indexed": false, "internalType": "bytes32", "name": "transferHash", "type": "bytes32" },
+            { "indexed": false, "internalType": "address", "name": "from", "type": "address" },
+            { "indexed": false, "internalType": "address", "name": "to", "type": "address" },
+            { "indexed": false, "internalType": "uint256", "name": "timestamp", "type": "uint256" },
+            { "indexed": false, "internalType": "string", "name": "notes", "type": "string" }
         ],
-        "name": "ProductRegistered",
+        "name": "TransferLogged",
         "type": "event"
+    },
+
+    // ── Constructor ──────────────────────────────────────────────────────────
+    { "inputs": [], "stateMutability": "nonpayable", "type": "constructor" },
+
+    // ── Stage 0: registerConsignment (payable) ───────────────────────────────
+    {
+        "inputs": [
+            { "internalType": "string", "name": "_consignmentId", "type": "string" },
+            { "internalType": "string", "name": "_productType", "type": "string" },
+            { "internalType": "string", "name": "_productDetail", "type": "string" },
+            { "internalType": "uint256", "name": "_quantity", "type": "uint256" },
+            { "internalType": "string", "name": "_invoiceId", "type": "string" },
+            { "internalType": "address", "name": "_retailerAddress", "type": "address" }
+        ],
+        "name": "registerConsignment",
+        "outputs": [],
+        "stateMutability": "payable",
+        "type": "function"
+    },
+
+    // ── Stage 1: logManufacturerToLogistics (payable) ────────────────────────
+    {
+        "inputs": [
+            { "internalType": "string", "name": "_consignmentId", "type": "string" },
+            { "internalType": "address", "name": "_retailerAddress", "type": "address" },
+            { "internalType": "string", "name": "_notes", "type": "string" }
+        ],
+        "name": "logManufacturerToLogistics",
+        "outputs": [{ "internalType": "bytes32", "name": "hash", "type": "bytes32" }],
+        "stateMutability": "payable",
+        "type": "function"
+    },
+
+    // ── Stage 2: logLogisticsToRetailer (payable) ────────────────────────────
+    {
+        "inputs": [
+            { "internalType": "string", "name": "_consignmentId", "type": "string" },
+            { "internalType": "address", "name": "_retailerAddress", "type": "address" },
+            { "internalType": "string", "name": "_notes", "type": "string" }
+        ],
+        "name": "logLogisticsToRetailer",
+        "outputs": [{ "internalType": "bytes32", "name": "hash", "type": "bytes32" }],
+        "stateMutability": "payable",
+        "type": "function"
+    },
+
+    // ── Stage 3: logRetailerToConsumer (payable) ─────────────────────────────
+    {
+        "inputs": [
+            { "internalType": "string", "name": "_consignmentId", "type": "string" },
+            { "internalType": "string", "name": "_consumerName", "type": "string" },
+            { "internalType": "string", "name": "_notes", "type": "string" }
+        ],
+        "name": "logRetailerToConsumer",
+        "outputs": [{ "internalType": "bytes32", "name": "hash", "type": "bytes32" }],
+        "stateMutability": "payable",
+        "type": "function"
+    },
+
+    // ── View Functions ───────────────────────────────────────────────────────
+    {
+        "inputs": [{ "internalType": "string", "name": "_id", "type": "string" }],
+        "name": "getConsignment",
+        "outputs": [
+            { "internalType": "string", "name": "productType", "type": "string" },
+            { "internalType": "uint256", "name": "quantity", "type": "uint256" },
+            { "internalType": "string", "name": "invoiceId", "type": "string" },
+            { "internalType": "address", "name": "manufacturer", "type": "address" },
+            { "internalType": "address", "name": "retailerAddress", "type": "address" },
+            { "internalType": "uint256", "name": "registeredAt", "type": "uint256" },
+            { "internalType": "uint8", "name": "currentStage", "type": "uint8" }
+        ],
+        "stateMutability": "view",
+        "type": "function"
     },
     {
         "inputs": [
-            {
-                "internalType": "string",
-                "name": "_name",
-                "type": "string"
-            },
-            {
-                "internalType": "string",
-                "name": "_detail",
-                "type": "string"
-            },
-            {
-                "internalType": "string",
-                "name": "_manufacturerName",
-                "type": "string"
-            }
+            { "internalType": "string", "name": "_consignmentId", "type": "string" },
+            { "internalType": "uint8", "name": "_stage", "type": "uint8" }
         ],
-        "name": "registerProduct",
+        "name": "getRecord",
+        "outputs": [
+            { "internalType": "bytes32", "name": "transferHash", "type": "bytes32" },
+            { "internalType": "address", "name": "from", "type": "address" },
+            { "internalType": "address", "name": "to", "type": "address" },
+            { "internalType": "uint256", "name": "timestamp", "type": "uint256" },
+            { "internalType": "string", "name": "notes", "type": "string" }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "registrationFee",
+        "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "transferFee",
+        "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "consignmentCount",
+        "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "owner",
+        "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+        "stateMutability": "view",
+        "type": "function"
+    },
+
+    // ── Admin ────────────────────────────────────────────────────────────────
+    {
+        "inputs": [
+            { "internalType": "uint256", "name": "_registrationFee", "type": "uint256" },
+            { "internalType": "uint256", "name": "_transferFee", "type": "uint256" }
+        ],
+        "name": "setFees",
         "outputs": [],
-        "stateMutability": "payable",
+        "stateMutability": "nonpayable",
         "type": "function"
     },
     {
@@ -73,93 +176,44 @@ const CONTRACT_ABI = [
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "owner",
-        "outputs": [
-            {
-                "internalType": "address payable",
-                "name": "",
-                "type": "address"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "productCount",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
-            }
-        ],
-        "name": "products",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "id",
-                "type": "uint256"
-            },
-            {
-                "internalType": "string",
-                "name": "name",
-                "type": "string"
-            },
-            {
-                "internalType": "string",
-                "name": "detail",
-                "type": "string"
-            },
-            {
-                "internalType": "string",
-                "name": "manufacturerName",
-                "type": "string"
-            },
-            {
-                "internalType": "uint256",
-                "name": "timestamp",
-                "type": "uint256"
-            },
-            {
-                "internalType": "address",
-                "name": "currentOwner",
-                "type": "address"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "registrationFee",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
     }
 ];
 
+// ── ETH → INR Rate ───────────────────────────────────────────────────────────
+const ETH_INR_FALLBACK = 250000;
+const REGISTRATION_FEE_ETH = 0.001;
+const TRANSFER_FEE_ETH = 0.0005;
+window.ethInrRate = ETH_INR_FALLBACK;
 
+async function fetchEthInrRate() {
+    try {
+        const resp = await fetch(
+            'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=inr',
+            { signal: AbortSignal.timeout(5000) }
+        );
+        if (!resp.ok) throw new Error('Rate fetch failed');
+        const json = await resp.json();
+        if (json.ethereum && json.ethereum.inr) {
+            window.ethInrRate = json.ethereum.inr;
+        }
+    } catch (_) { /* use fallback */ }
+    updateFeeLabels();
+    return window.ethInrRate;
+}
+
+function getFeeInr() { return Math.round(window.ethInrRate * REGISTRATION_FEE_ETH).toLocaleString('en-IN'); }
+function getTransferFeeInr() { return Math.round(window.ethInrRate * TRANSFER_FEE_ETH).toLocaleString('en-IN'); }
+
+function updateFeeLabels() {
+    const regFeeStr = `₹${getFeeInr()} Transaction Security Fee`;
+    const btnText = document.querySelector('#registerProductForm .button-text');
+    if (btnText) btnText.textContent = `Register Consignment (${regFeeStr})`;
+
+    const invFeeEl = document.getElementById('inv-blockchain-fee');
+    if (invFeeEl) invFeeEl.textContent = regFeeStr;
+}
+
+// ── Web3 Service ─────────────────────────────────────────────────────────────
 const Web3Service = {
     isConnected: false,
 
@@ -168,10 +222,8 @@ const Web3Service = {
             showToast("MetaMask not found. Please install a wallet extension.", true);
             return false;
         }
-
         try {
             showToast("Requesting wallet access...", false);
-            // Simulate a short delay for "Connecting" feel
             await new Promise(r => setTimeout(r, 800));
 
             provider = new ethers.BrowserProvider(window.ethereum);
@@ -186,7 +238,6 @@ const Web3Service = {
             this.updateUI(userAddress);
             showToast("Secure connection established with VeriChain Wallet.");
             return true;
-
         } catch (error) {
             console.error("Connection Error:", error);
             showToast("Connection rejected by user.", true);
@@ -197,7 +248,6 @@ const Web3Service = {
     updateUI(address) {
         const addrDisplay = `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
         const walletBadge = document.getElementById('wallet-badge');
-
         if (walletBadge) {
             walletBadge.innerHTML = `
                 <div class="relative">
@@ -212,33 +262,37 @@ const Web3Service = {
         }
     },
 
-    async registerProduct(name, detail, manufacturer) {
+    // ── Stage 0: Register Consignment (payable 0.001 ETH) ─────────────────────
+    async registerProduct(consignmentId, productType, detail, _ignoredManufacturer, quantity, invoiceId, retailerAddress) {
+        const feeStr = `₹${getFeeInr()} Transaction Security Fee`;
+        const ethFee = ethers.parseEther("0.001");
+
         if (!this.isConnected || !contract) {
-            // Fallback for demo when not connected, still show modal for effect
-            this.showTxModal("Registering Product", "Initiating secure handshake...");
-            await new Promise(r => setTimeout(r, 1500));
+            this.showTxModal("Registering Consignment", `Demo mode — ${feeStr}`);
+            await new Promise(r => setTimeout(r, 1400));
             this.updateTxModal("Signing virtual transaction...");
-            await new Promise(r => setTimeout(r, 1500));
+            await new Promise(r => setTimeout(r, 1200));
             this.updateTxModal("Broadcasting to VeriChain Node...");
-            await new Promise(r => setTimeout(r, 1000));
+            await new Promise(r => setTimeout(r, 800));
             this.hideTxModal();
             return `TX-DEMO-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
         }
 
         try {
-            this.showTxModal("Registering Product", "Please confirm transaction (includes 0.001 ETH fee)...");
+            // Retailer address: use zero address if not a valid ETH address
+            let retailerAddr = ethers.ZeroAddress;
+            if (retailerAddress && retailerAddress.startsWith('0x') && retailerAddress.length === 42) {
+                retailerAddr = retailerAddress;
+            }
 
-            // Generate the fee using Ethers v6 utility
-            const registrationFee = ethers.parseEther("0.001");
-
-            // CRITICAL FIX: The Solidity contract requires 3 arguments: _name, _detail, _manufacturerName
-            // We now also pass an override object `{ value: registrationFee }` because the function is `payable`
-            const tx = await contract.registerProduct(name, detail, manufacturer, { value: registrationFee });
-
+            this.showTxModal("Registering Consignment", `Please confirm — ${feeStr} (0.001 ETH)...`);
+            const tx = await contract.registerConsignment(
+                consignmentId, productType, detail, quantity, invoiceId, retailerAddr,
+                { value: ethFee }
+            );
             this.updateTxModal("Broadcasting to Ethereum Network...");
             await tx.wait();
-
-            this.updateTxModal("Transaction Confirmed!");
+            this.updateTxModal("Consignment Registered on Blockchain!");
             setTimeout(() => this.hideTxModal(), 1000);
             return tx.hash;
         } catch (error) {
@@ -249,49 +303,67 @@ const Web3Service = {
         }
     },
 
-    async transferProduct(productId, toAddress, stage) {
+    // ── Stages 1-3: Transfer (payable 0.0005 ETH each) ────────────────────────
+    async logTransfer(consignmentId, retailerAddressOrConsumer, stage, notes = "") {
+        const transferFeeStr = `₹${getTransferFeeInr()} Transfer Security Fee`;
+        const ethFee = ethers.parseEther("0.0005");
+        const demoHash = () => `0x${Array(64).fill(0).map(() => Math.floor(Math.random() * 16).toString(16)).join('')}`;
+
         if (!this.isConnected || !contract) {
-            // Demo Fallback
-            this.showTxModal("Updating Status", "Syncing with supply chain ledger...");
-            await new Promise(r => setTimeout(r, 1500));
-            this.updateTxModal("Encrypting update metadata...");
+            this.showTxModal("Logging Transfer", `Demo mode — ${stage}...`);
             await new Promise(r => setTimeout(r, 1200));
+            this.updateTxModal("Generating cryptographic hash...");
+            await new Promise(r => setTimeout(r, 800));
             this.hideTxModal();
-            return `TX-DEMO-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+            return demoHash();
         }
 
         try {
-            // Numeric ID extraction logic
-            const numericId = parseInt(productId.match(/\d+/)?.[0]);
-            if (!numericId) {
-                console.warn("Invalid ID for contract");
-                return null;
+            let tx;
+            this.showTxModal("Logging Transfer", `Confirm — ${transferFeeStr} (0.0005 ETH) for ${stage}...`);
+
+            // Resolve retailer address (use zero address as fallback for non-ETH strings)
+            let retailerAddr = ethers.ZeroAddress;
+            if (retailerAddressOrConsumer && retailerAddressOrConsumer.startsWith('0x')
+                && retailerAddressOrConsumer.length === 42) {
+                retailerAddr = retailerAddressOrConsumer;
             }
 
-            this.showTxModal("Updating Status", "Awaiting wallet signature...");
-            const tx = await contract.transferProduct(numericId, toAddress, stage);
+            if (stage === "manufacturer-to-logistics") {
+                tx = await contract.logManufacturerToLogistics(
+                    consignmentId, retailerAddr, notes, { value: ethFee }
+                );
+            } else if (stage === "logistics-to-retailer") {
+                tx = await contract.logLogisticsToRetailer(
+                    consignmentId, retailerAddr, notes, { value: ethFee }
+                );
+            } else if (stage === "retailer-to-consumer") {
+                tx = await contract.logRetailerToConsumer(
+                    consignmentId, retailerAddressOrConsumer, notes, { value: ethFee }
+                );
+            } else {
+                this.hideTxModal();
+                return demoHash();
+            }
 
             this.updateTxModal("Mining transaction block...");
             await tx.wait();
-
-            this.updateTxModal("Update Verified on Blockchain!");
+            this.updateTxModal("Hash Verified on Blockchain!");
             setTimeout(() => this.hideTxModal(), 1000);
             return tx.hash;
-
         } catch (error) {
-            console.error("Web3 Error:", error);
+            console.error("Transfer Web3 Error:", error);
             this.hideTxModal();
-            showToast(`Update Failed: ${error.reason || "User rejected"}`, true);
-            return null;
+            showToast(`Transfer Failed: ${error.reason || "User rejected"}`, true);
+            return demoHash();
         }
     },
 
-    // Modal Helpers
+    // ── Modal Helpers ─────────────────────────────────────────────────────────
     showTxModal(title, status) {
         const modal = document.getElementById('txModal');
         const titleEl = document.getElementById('txModalTitle');
         const statusEl = document.getElementById('txModalStatus');
-
         if (modal && titleEl && statusEl) {
             titleEl.textContent = title;
             statusEl.textContent = status;
@@ -299,12 +371,10 @@ const Web3Service = {
             modal.classList.add('flex', 'fade-in');
         }
     },
-
     updateTxModal(status) {
         const statusEl = document.getElementById('txModalStatus');
         if (statusEl) statusEl.textContent = status;
     },
-
     hideTxModal() {
         const modal = document.getElementById('txModal');
         if (modal) {
@@ -314,6 +384,11 @@ const Web3Service = {
     }
 };
 
-// Expose to window for app.js
 window.Web3Service = Web3Service;
+window.fetchEthInrRate = fetchEthInrRate;
+window.getFeeInr = getFeeInr;
+window.getTransferFeeInr = getTransferFeeInr;
+window.updateFeeLabels = updateFeeLabels;
 
+// Fetch live INR rate as soon as the script loads
+fetchEthInrRate();
